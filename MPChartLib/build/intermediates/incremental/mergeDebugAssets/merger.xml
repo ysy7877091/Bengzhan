@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger version="3"><dataSet config="main"><source path="D:\androidProjectExtra\BenZhanZiDongHua\MPChartLib\assets"/><source path="D:\androidProjectExtra\BenZhanZiDongHua\MPChartLib\build\generated\assets\shaders\debug"/></dataSet><dataSet config="debug"><source path="D:\androidProjectExtra\BenZhanZiDongHua\MPChartLib\src\debug\assets"/></dataSet></merger>

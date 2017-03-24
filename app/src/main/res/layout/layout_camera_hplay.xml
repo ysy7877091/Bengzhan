@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <SurfaceView
+            android:layout_width="420dp"
+            android:layout_height="match_parent"
+            android:id="@+id/surfaceView"
+            android:layout_centerInParent="true"
+            />
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="等待视频"
+            android:id="@+id/txt等待视频"
+            android:textAlignment="center"
+            android:textSize="50dp"
+            android:textColor="#d5cece"
+            android:layout_centerVertical="true" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="返回"
+            android:id="@+id/SP_button"
+            android:background="@color/green"/>
+    </RelativeLayout>
+
+
+</LinearLayout>

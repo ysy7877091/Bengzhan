@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.administrator.benzhanzidonghua">
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.VIBRATE"></uses-permission>
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/h"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        >
+        <activity android:name=".LoginActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".BeiDouPersonInformation"></activity>
+        <activity android:name=".CarInformation"></activity>
+        <activity android:name=".MainActivity"></activity>
+        <activity android:name=".BaoJingListActivity"></activity>
+        <activity android:name=".BaoJingChaXun"></activity>
+        <activity android:name="com.dashuju.DaShuJuChaXun"></activity>
+        <activity android:name=".BaoJingMeauActivity"></activity>
+        <activity android:name=".JianKongList"></activity>
+        <activity android:name=".CameraPlayXXActivity"></activity>
+        <activity android:name=".LiShiChaXun"></activity>
+        <activity android:name=".BengZhanXiangQingActivity"></activity>
+        <activity android:name="com.dashuju.DaShuJUListActivity"></activity>
+        <activity android:name="com.dashuju.Simple_BZ"></activity>
+        <activity android:name="com.dashuju.simpleBZ"></activity>
+        <activity android:name=".BeiDouSouSuo"></activity>
+        <activity android:name=".YuLiangChaXunActivity"
+                    android:configChanges="orientation|keyboardHidden|screenSize">
+        </activity>
+        <activity android:name=".BeiDouCarLieBiao"></activity>
+        <activity android:name=".BeiDouGuiJi"></activity>
+        <activity android:name=".LiShiMeau"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+        </activity><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
+     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        <!--<receiver android:name=".ShouYeAiCgisFragment$MapReceiver">
+            <intent-filter>
+                <action android:name="com.example.broadcastreceiver.action.QUANTU"></action>
+                <action android:name="com.example.broadcastreceiver.action.CLICK"></action>
+            </intent-filter>
+        </receiver>-->
+
+        <receiver android:name=".MainActivity$MyReceiver"></receiver>
+    </application>
+
+</manifest>
