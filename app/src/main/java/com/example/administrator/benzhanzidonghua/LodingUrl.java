@@ -43,7 +43,7 @@ public class LodingUrl {
 
             @Override
             public void run() {
-                // TODO Auto-generated method stub
+                //
                 URL imageUrl = bitmapUrl;
                 try {
                     HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
@@ -53,7 +53,7 @@ public class LodingUrl {
                     msg.obj = bitmap;
                     handler.sendMessage(msg);
                 } catch (IOException e) {
-                    // TODO Auto-generated catch block
+                    //
                     e.printStackTrace();
                 }
             }

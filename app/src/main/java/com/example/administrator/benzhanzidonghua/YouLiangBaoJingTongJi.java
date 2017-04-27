@@ -262,7 +262,7 @@ public class YouLiangBaoJingTongJi extends AppCompatActivity implements DatePick
 
             @Override
             public boolean onTouch(View arg0, MotionEvent arg1) {
-                // TODO Auto-generated method stub
+                //
                 Log.i("mengdd", "onTouch : ");
                 return false;
             }
