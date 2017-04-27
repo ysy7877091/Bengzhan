@@ -67,6 +67,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:id="@+id/bt_rightMeau"
+            android:textColor="@color/white"
             android:background="#00000000"/>
     </RelativeLayout>
         <LinearLayout

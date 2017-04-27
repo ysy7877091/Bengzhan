@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/white">
+    android:background="@color/white"
+   >
     <!--<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -45,12 +46,19 @@
             android:text="全图"
             android:paddingLeft="20dp"/>
     </LinearLayout>-->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:id="@+id/meau_LL"
+            >
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/BengZhanLieBiao"
-        android:paddingLeft="20dp"
+        android:paddingLeft="15dp"
         android:layout_weight="1"
         android:gravity="center_vertical"
         >
@@ -71,7 +79,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/ShiPin"
-        android:paddingLeft="20dp"
+        android:paddingLeft="15dp"
         android:layout_weight="1"
         android:gravity="center_vertical"
         >
@@ -92,7 +100,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/ShuiWeiJianCe"
-        android:paddingLeft="20dp"
+        android:paddingLeft="15dp"
         android:layout_weight="1"
         android:gravity="center_vertical"
         >
@@ -113,7 +121,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/YuLiangJianCe"
-        android:paddingLeft="20dp"
+        android:paddingLeft="15dp"
         android:layout_weight="1"
         android:gravity="center_vertical"
         >
@@ -134,7 +142,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/JiShuiDian"
-        android:paddingLeft="20dp"
+        android:paddingLeft="15dp"
         android:layout_weight="1"
         android:gravity="center_vertical"
         >
@@ -155,7 +163,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/LiShiJiLu"
-        android:paddingLeft="20dp"
+        android:paddingLeft="15dp"
         android:layout_weight="1"
         android:gravity="center_vertical"
         >
@@ -176,7 +184,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/BaoJing"
-        android:paddingLeft="20dp"
+        android:paddingLeft="15dp"
         android:layout_weight="1"
         android:gravity="center_vertical"
         >
@@ -239,7 +247,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/BeiDou"
-        android:paddingLeft="20dp"
+        android:paddingLeft="15dp"
         android:layout_weight="1"
         android:gravity="center_vertical"
         >
@@ -262,7 +270,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/TuiChu"
-        android:paddingLeft="20dp"
+        android:paddingLeft="15dp"
         android:layout_weight="1"
         android:gravity="center_vertical"
         >
@@ -280,5 +288,6 @@
             android:paddingLeft="20dp"
             />
     </LinearLayout>
+        </LinearLayout>
 
 </LinearLayout>

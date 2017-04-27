@@ -2,7 +2,24 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/white">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@mipmap/topnav_color"
+        android:scaleType="fitXY">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@mipmap/box"
+            android:gravity="center"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="5dp"
+            android:id="@+id/BD_Box"
+            android:text="日期"
+            android:clickable="true"/>
+    </RelativeLayout>
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -16,10 +33,11 @@
             android:textColor="@color/black"
             android:layout_centerVertical="true"
             />
-        <EditText
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="请输入车牌号"
+            android:hint="请选择车牌号"
+            android:textSize="@dimen/x16"
             android:layout_alignParentRight="true"
             android:id="@+id/BD_GJcarPaiHao"
             android:background="@null"
@@ -40,16 +58,6 @@
             android:text="时间选择"
             android:textSize="@dimen/x16"
             android:textColor="@color/black"
-            android:layout_centerVertical="true"
-            />
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:hint="请选择日期"
-            android:textSize="@dimen/x16"
-            android:layout_alignParentRight="true"
-            android:background="#00000000"
-            android:id="@+id/BD_dateTime"
             android:layout_centerVertical="true"
             />
     </RelativeLayout>

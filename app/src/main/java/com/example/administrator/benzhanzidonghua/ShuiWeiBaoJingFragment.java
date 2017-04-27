@@ -104,4 +104,16 @@ public class ShuiWeiBaoJingFragment extends Fragment{
         }
         return list;
         }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(progressDialog!=null) {
+            if(progressDialog.isShowing()){
+                progressDialog.dismiss();
+
+            }
+            progressDialog = null;
+        }
+    }
 }

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
     <soap:Body>
-        <AppLogin xmlns="http://tempuri.org/">
+        <Get_LoginOKOrNo xmlns="http://tempuri.org/">
             <loginName>string1</loginName>
             <loginPwd>string2</loginPwd>
-            <imei>string3</imei>
-        </AppLogin>
+            <IMEI>string3</IMEI>
+        </Get_LoginOKOrNo>
     </soap:Body>
 </soap:Envelope>

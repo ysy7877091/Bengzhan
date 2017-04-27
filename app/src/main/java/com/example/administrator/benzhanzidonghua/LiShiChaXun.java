@@ -9,14 +9,9 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.TextAppearanceSpan;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -24,6 +19,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dataandtime.data.DatePickerDialog;
+import com.vanpeng.javabeen.JiangYuFragmentBeen;
+import com.vanpeng.javabeen.PublicInterface;
 import com.vanpeng.javabeen.RequestWebService;
 import com.vanpeng.javabeen.YuLiangClass;
 
@@ -36,14 +33,14 @@ import java.util.List;
  * 历史查询 雨量 气体 水位
  */
 
-public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.OnDateSetListener{
+public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.OnDateSetListener, PublicInterface {
     private MyProgressDialog progressDialog;
     private MyProgressDialog progressDialog1;
     private TextView BJ_BengZhanName;
     //选择开始或结束日期 年月日
-    private String Start_year="";
-    private String Start_monthOfYear="";
-    private String Start_dayOfMonth="";
+    private String year="";
+    private String month="";
+    private String day="";
     //用于设置标题栏上空白位置的日期
     private String Start="";
     private String end="";
@@ -65,6 +62,7 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
     private TextView YL_Name;//雨量站点时间
     private String serviceURL = Path.get_WebServicesYLURL();
     private String bool="";
+    private List<JiangYuFragmentBeen> BZ_nameList;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,8 +95,17 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
         LS_search.setOnClickListener(new LiShiChaXunListener());
 
         //Calendar c = Calendar.getInstance();
+        Calendar calendar = Calendar.getInstance();
+        year = String.valueOf(calendar.get(Calendar.YEAR));
+        month = String.valueOf(calendar.get(Calendar.MONTH)+1);
+        day =  String.valueOf(calendar.get(Calendar.DAY_OF_MONTH));
 
-
+        if(month.length()==1){
+          month = "0"+month;
+        }
+        if(day.length()==1){
+            day= "0"+day;
+        }
 
         getIntentData();
         SelectStartTime();
@@ -122,8 +129,6 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
         if(intent!=null) {
             bool = intent.getStringExtra("bool");
             if (bool.equals("0")||bool.equals("00")) {
-                YL_fanwei = (RelativeLayout) findViewById(R.id.YL_fanwei);
-                YL_fanwei.setVisibility(View.VISIBLE);
                 YL_Name = (TextView) findViewById(R.id.YL_Name);
                 YL_Name.setOnClickListener(new LiShiChaXunListener());
                 TextView mingcheng = (TextView)findViewById(R.id.mingcheng);
@@ -139,13 +144,13 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
     @Override
     public void onDateSet(DatePickerDialog datePickerDialog, int year, int month, int day) {
         String hourOfDayString  = String.valueOf(year);
-        String minuteString = String.valueOf(month);
+        String minuteString = String.valueOf(month+1);
         String dayString = String.valueOf(day);
         if(minuteString.length()==1){
             minuteString="0"+minuteString;
         }
         if(dayString.length()==1){
-            hourOfDayString = "0"+hourOfDayString;
+            dayString = "0"+dayString;
         }
         //Toast.makeText(this, "new time:" +hourOfDayString+"-"+ minuteString+ "-" +dayString, Toast.LENGTH_LONG).show();
         if(startOrend==true){//选择开始时间
@@ -155,7 +160,29 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
             tv_endTime.setText(hourOfDayString+"-"+ minuteString+ "-" +dayString);
             sub_EndTime=hourOfDayString+"-"+ minuteString+ "-" +dayString;
         }
-        BJ_tv.setText(sub_StartTime+" "+"至"+" "+sub_EndTime);
+        BJ_tv.setText(tv_startTime.getText().toString()+" "+"至"+" "+tv_endTime.getText().toString());
+    }
+    //获取雨量区域名称和ID成功回调
+    @Override
+    public void onGetDataSuccess(List<JiangYuFragmentBeen> list) {
+        this.BZ_nameList = list;
+        Message msg = Message.obtain();
+        msg.obj="1";
+        handlerGetYuLiangList.sendMessage(msg);
+    }
+    //获取雨量区域名称和ID失败回调
+    @Override
+    public void onGetDataError(String errmessage) {
+        Message msg = Message.obtain();
+        msg.obj=errmessage;
+        handlerGetYuLiangList.sendMessage(msg);
+    }
+    //获取雨量区域名称和ID无数据回调
+    @Override
+    public void onEmptyData(String Emptymessage) {
+        Message msg = Message.obtain();
+        msg.obj=Emptymessage;
+        handlerGetYuLiangList.sendMessage(msg);
     }
 
     private class LiShiChaXunListener implements View.OnClickListener{
@@ -163,24 +190,34 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
         public void onClick(View view) {
             switch (view.getId()){
                 case R.id.DSJ_back:
-                    finish();
+
                     break;
-                /*case R.id.DSJ_StartTime:  SelectStartTime(0);//0代表开始日期
+               /* case R.id.DSJ_StartTime:  SelectStartTime(0);//0代表开始日期
                                             break;
                 case R.id.DSJ_EndTime:SelectStartTime(1);//1代表结束日期
                                         break;*/
                 case R.id.DSJ_Name:    if(bool.equals("0")){
-                                                        SelectYLName();//雨量查询选择站点名称
+                                                                    if(arr_ID!=null&&arr_Name!=null&&arr_ID.length>1&&arr_Name.length>1){
+                                                                        waterDialog();
+                                                                    }else{
+                                                                        SelectYLName();//雨量查询选择站点名称
+                                                                    }
+                                                                    //SelectYLName();//雨量查询选择站点名称
                                                             } else{
-                                                        SelectBZName();//选择泵站名
+                                                                    //SelectBZName();//选择泵站名
+                                                                if(BZ_name!=null&&BZ_name.length>1){
+                                                                    setDialog();
+                                                                }else{
+                                                                    SelectBZName();//选择泵站名
+                                                                }
                                                         }
                                                 break;
                 case R.id.YL_Name://雨量查询选择时间24小时
                                     select24Hour();
                                     break;
                 case R.id.DSJ_search: if(bool.equals("0")||bool.equals("00")){//雨量查询
-                                                    String value=YL_Name.getText().toString().trim();
-                                                    if(value.equals("24小时")){
+                                                    //String value=YL_Name.getText().toString().trim();
+                                                    /*if(value.equals("24小时")){
                                                         String str = BJ_BengZhanName.getText().toString().trim();
                                                         if(str.equals("请选择")){
                                                             Toast.makeText(LiShiChaXun.this, "请选择雨量监控地区", Toast.LENGTH_SHORT).show();
@@ -190,7 +227,7 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
                                                             intent.putExtra("panduan","00");//00代表查询24小时时间内数据
                                                             startActivity(intent);
                                                         }
-                                                    }else{
+                                                    }else{*/
                                                         String startTime = tv_startTime.getText().toString().trim();
                                                         String endTime = tv_endTime.getText().toString().trim();
                                                         String val = BJ_BengZhanName.getText().toString().trim();
@@ -198,8 +235,8 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
                                                             if(!startTime.equals("选择开始日期")&&!endTime.equals("选择结束日期")) {
                                                                 Intent intent1 = new Intent(LiShiChaXun.this, YuLiangChaXunActivity.class);
                                                                 intent1.putExtra("ID", ID);
-                                                                intent1.putExtra("StartTime",sub_StartTime);
-                                                                intent1.putExtra("EndTime", sub_EndTime);
+                                                                intent1.putExtra("StartTime",tv_startTime.getText().toString());
+                                                                intent1.putExtra("EndTime", tv_endTime.getText().toString());
                                                                 intent1.putExtra("panduan","11");//11代表查询自己设置的时间内数据
                                                                 startActivity(intent1);
                                                             }else{
@@ -208,8 +245,6 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
                                                         }else{
                                                             Toast.makeText(LiShiChaXun.this, "请选择雨量监控地区", Toast.LENGTH_SHORT).show();
                                                         }
-                                                    }
-
 
                                             }else {//气体和水位的查询
                                                 String str = BJ_BengZhanName.getText().toString().trim();
@@ -224,17 +259,31 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
                                                         Intent intent = new Intent(LiShiChaXun.this, LiShiMeau.class);
                                                         intent.putExtra("ID", ID);
                                                         intent.putExtra("Name", BJ_BengZhanName.getText().toString().trim());
-                                                        intent.putExtra("StartTime", sub_StartTime);
-                                                        intent.putExtra("EndTime", sub_EndTime);
+                                                        intent.putExtra("StartTime", tv_startTime.getText().toString());
+                                                        intent.putExtra("EndTime",tv_endTime.getText().toString());
                                                         startActivity(intent);
                                                     }
                                                 }
                                             }
                                         break;
-                case R.id.LS_button:finish();break;
+                case R.id.LS_button:
+                                        Intent intentOK = new Intent();
+                                        setResult(2,intentOK);
+                                        finish();
+                                        break;
 
             }
         }
+    }
+    OnlsclikListener myListener;
+    //定义点击返回时回调接口 view1向mainactivity传数据时，在view1中定义
+    interface OnlsclikListener {
+        public void callBack1() ;
+    }
+
+    //定义供fragment调用的函数
+    public void setOnclikListener(OnlsclikListener Listener) {
+        this.myListener =Listener;
     }
 
    /* //选择开始或结束时间
@@ -406,11 +455,11 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
         };
         new Thread(networkGetBengZhanInfoNew).start();
     }
+    private String [] BZ_name;
     public Handler handlerGetBengZhanListNew = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            final String [] BZ_name;
             val = (String) msg.obj;
             Log.e("warn",val);
             if (val.toString().equals("999999")) {
@@ -434,7 +483,8 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
                         }
                     }
                 }
-                AlertDialog.Builder builder = new AlertDialog.Builder(LiShiChaXun.this);
+                setDialog();
+                /*AlertDialog.Builder builder = new AlertDialog.Builder(LiShiChaXun.this);
                 builder.setTitle("请选择");
                 builder.setSingleChoiceItems(BZ_name, -1, new DialogInterface.OnClickListener() {
                     @Override
@@ -445,83 +495,78 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
                         dialogInterface.dismiss();
                     }
                 });
-                builder.show();
+                builder.show();*/
             }
 
         }
     };
-
-
+    private void setDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(LiShiChaXun.this);
+        builder.setTitle("请选择");
+        builder.setSingleChoiceItems(BZ_name, -1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                String val = BZ_name[i];
+                BJ_BengZhanName.setText(val);
+                ID=arr[i];
+                dialogInterface.dismiss();
+            }
+        });
+        builder.show();
+    }
 
     private void SelectYLName() {
         progressDialog1=new MyProgressDialog(LiShiChaXun.this, true, "加载中..");
-        new Thread(networkGetYuLiangInfor).start();
+        new YuliangQuyu().getShopsData(this);
     }
-    Runnable networkGetYuLiangInfor = new Runnable() {
-        @Override
-        public void run() {
-            Log.e("warn","74");
-            String methodName = "Get10JieDao";//Get24JiangYuLiangAndName,
-            ArrayList<String> parameterNameList = new ArrayList<>();
-            ArrayList<String> parameterValueList = new ArrayList<>();
 
-            try {
-                Log.e("warn","80");
-                String result = RequestWebService.ServiceRequest("http://tempuri.org/", methodName, serviceURL, parameterNameList, parameterValueList);
-                Message msg = Message.obtain();
-                msg.obj=result;
-                handlerGetYuLiangList.sendMessage(msg);
-                Log.d("DEBUG", "获取雨量信息WebService结果：" + result.toString());
-            } catch (Exception e) {
-                Message msg = Message.obtain();
-                msg.obj="999999";
-                handlerGetYuLiangList.sendMessage(msg);
-            }
-
-        };
-
-    };
+    private String arr_Name [];//装载雨量站点名称
+    private  String arr_ID [];//装载雨量站点ID
+    private void closeDialog(){
+        if( progressDialog1!=null){
+            progressDialog1.dismiss();
+        }
+    }
     Handler handlerGetYuLiangList = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             String val = (String) msg.obj;
-            final List<YuLiangClass> listBengZhan = new ArrayList<YuLiangClass>();
-            if (val.toString().equals("999999")) {
-                progressDialog1.dismiss();
-                Toast.makeText(getApplicationContext(), "获取雨量信息失败,网络或者服务器异常", Toast.LENGTH_SHORT).show();
-            } else {
-                progressDialog1.dismiss();
-                final String[] objects = val.split("\\|");
-                final String arr_Name []=new String [objects.length];//装载雨量站点名称
-                final String arr_ID [] =new String [objects.length];//装载雨量站点ID
-                        Log.d("DEBUG", "获取雨量信息WebService结果_回调函数：" + val);
-                for (int i = 0; i < objects.length; i++) {
-                    Log.d("DEBUG", "WebService结果_回调函数objects[i]：" + objects[i].toString());
-                    if (objects[i].length() > 0) {
-                        String[] values = objects[i].split(",");
-                        Log.d("DEBUG", "WebService结果_回调函数values.length：" + values.length);
-                        if (values.length > 1) {
-                            arr_Name[i]=values[1].toString();
-                            arr_ID [i]=values[0].toString();
+
+            if (val.toString().equals("1")) {
+                closeDialog();
+                arr_Name=new String [BZ_nameList.size()];//装载雨量站点名称
+                arr_ID=new String [BZ_nameList.size()];//装载雨量站点ID
+                for (int i = 0; i < BZ_nameList.size(); i++) {
+                    if (BZ_nameList.size() > 0) {
+                        if (BZ_nameList.size() > 1) {
+                            arr_Name[i]=BZ_nameList.get(i).getNAME();
+                            arr_ID [i]=BZ_nameList.get(i).getID();
                         }
                     }
                 }
-                AlertDialog.Builder builder = new AlertDialog.Builder(LiShiChaXun.this);
-                builder.setTitle("请选择");
-                builder.setSingleChoiceItems(arr_Name, -1, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        String val = arr_Name[i];
-                        BJ_BengZhanName.setText(val);
-                        ID=arr_ID[i];
-                        dialogInterface.dismiss();
-                    }
-                });
-                builder.show();
+                waterDialog();
+            }else{
+                closeDialog();
+                Toast.makeText(getApplicationContext(), val, Toast.LENGTH_SHORT).show();
             }
+
         }
     };
+    private void waterDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(LiShiChaXun.this);
+        builder.setTitle("请选择");
+        builder.setSingleChoiceItems(arr_Name, -1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                String val = arr_Name[i];
+                BJ_BengZhanName.setText(val);
+                ID=arr_ID[i];
+                dialogInterface.dismiss();
+            }
+        });
+        builder.show();
+    }
     //雨量查询选择时间24小时
     private void select24Hour(){
         final String [] arr_Time = {"24小时","无限制"};
@@ -536,6 +581,9 @@ public class LiShiChaXun extends AppCompatActivity implements DatePickerDialog.O
                 if(val.equals("24小时")){
                     tv_startTime.setEnabled(false);
                     tv_endTime.setEnabled(false);
+                    tv_startTime.setText(year+"-"+month+"-"+day);
+                    tv_endTime.setText(year+"-"+month+"-"+day);
+                    BJ_tv.setText(year+"-"+month+"-"+day+" "+"至"+" "+year+"-"+month+"-"+day);
                 }else{
                     tv_startTime.setEnabled(true);
                     tv_endTime.setEnabled(true);

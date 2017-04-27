@@ -58,54 +58,54 @@ public class BengZhanXiangQingActivity extends AppCompatActivity {
         });*/
         BengZhanClass bengZhanClass =(BengZhanClass)getIntent().getSerializableExtra("BengZhanClass");
 
-        TextView txt泵站名称=(TextView)findViewById(R.id.tv_bzName);
-        txt泵站名称.setText(bengZhanClass.getName());
+        TextView txt_bengname=(TextView)findViewById(R.id.tv_bzName);
+        txt_bengname.setText(bengZhanClass.getName());
 
-        TextView txt一氧化碳 = (TextView) findViewById(R.id.tv_yyht);
+        TextView txt_co2 = (TextView) findViewById(R.id.tv_yyht);
         if(bengZhanClass.getYiYangHuaTan()<60000) {
-            txt一氧化碳.setText(Double.toString(bengZhanClass.getYiYangHuaTan()));
+            txt_co2.setText(Double.toString(bengZhanClass.getYiYangHuaTan()));
         }
         else
         {
-            txt一氧化碳.setText("0");
+            txt_co2.setText("0");
         }
 
-        TextView txt甲烷 = (TextView) findViewById(R.id.tv_jia_wan);
+        TextView txt_ch3 = (TextView) findViewById(R.id.tv_jia_wan);
         if(bengZhanClass.getJiaWan()<60000) {
-            txt甲烷.setText(Double.toString(bengZhanClass.getJiaWan()));
+            txt_ch3.setText(Double.toString(bengZhanClass.getJiaWan()));
         }
         else
         {
-            txt甲烷.setText("0");
+            txt_ch3.setText("0");
         }
 
-        TextView txt硫酸铵 = (TextView) findViewById(R.id.tv_liu_suan_an);
+        TextView txt_soh = (TextView) findViewById(R.id.tv_liu_suan_an);
         if(bengZhanClass.getLiuHuaQin()<60000) {
-            txt硫酸铵.setText(Double.toString(bengZhanClass.getLiuHuaQin()));
+            txt_soh.setText(Double.toString(bengZhanClass.getLiuHuaQin()));
         }
         else
         {
-            txt硫酸铵.setText("0");
+            txt_soh.setText("0");
         }
 
-        TextView txt氨气 = (TextView) findViewById(R.id.tv_an_qi);
+        TextView txt_n2 = (TextView) findViewById(R.id.tv_an_qi);
         if(bengZhanClass.getAnQi()<60000) {
-            txt氨气.setText(Double.toString(bengZhanClass.getAnQi()));
+            txt_n2.setText(Double.toString(bengZhanClass.getAnQi()));
         }
         else
         {
-            txt氨气.setText("0");
+            txt_n2 .setText("0");
         }
 
         if(bengZhanClass.getVideoMonitoringList()!=null) {
             for (int i = 0; i < bengZhanClass.getVideoMonitoringList().size(); i++) {
                 if (bengZhanClass.getVideoMonitoringList().get(i).getName().equals("视频1")) {
-                    ImageView btn一号监控 = (ImageView) findViewById(R.id.btn摄像头室外);
-                    btn一号监控.setTag(bengZhanClass.getVideoMonitoringList().get(i));
+                    ImageView btn_onevideo = (ImageView) findViewById(R.id.btn摄像头室外);
+                    btn_onevideo.setTag(bengZhanClass.getVideoMonitoringList().get(i));
 
                 } else if (bengZhanClass.getVideoMonitoringList().get(i).getName().equals("视频2")) {
-                    ImageView btn二号监控 = (ImageView) findViewById(R.id.btn摄像头室内);
-                    btn二号监控.setTag(bengZhanClass.getVideoMonitoringList().get(i));
+                    ImageView btn_twovideo = (ImageView) findViewById(R.id.btn摄像头室内);
+                    btn_twovideo.setTag(bengZhanClass.getVideoMonitoringList().get(i));
                 }
             }
         }
@@ -122,9 +122,9 @@ public class BengZhanXiangQingActivity extends AppCompatActivity {
         }
     }
 
-    public void btn摄像头1_OnClick(View view) {
-        ImageView btn一号监控=(ImageView)findViewById(R.id.btn摄像头室外);
-        VideoMonitoring videoMonitoring= (VideoMonitoring)btn一号监控.getTag();
+    public void btn1_OnClick(View view) {
+        ImageView btn_one=(ImageView)findViewById(R.id.btn摄像头室外);
+        VideoMonitoring videoMonitoring= (VideoMonitoring)btn_one.getTag();
         if(videoMonitoring==null)
         {
             Toast.makeText(getApplicationContext(), "此泵站第一路视频不存在。", Toast.LENGTH_SHORT).show();
@@ -143,9 +143,9 @@ public class BengZhanXiangQingActivity extends AppCompatActivity {
             startActivity(intent);
         }
     }
-    public void btn摄像头2_OnClick(View view) {
-        ImageView btn二号监控=(ImageView)findViewById(R.id.btn摄像头室内);
-        VideoMonitoring videoMonitoring= (VideoMonitoring)btn二号监控.getTag();
+    public void btn2_OnClick(View view) {
+        ImageView btn_two=(ImageView)findViewById(R.id.btn摄像头室内);
+        VideoMonitoring videoMonitoring= (VideoMonitoring)btn_two.getTag();
         if(videoMonitoring == null)
         {
             Toast.makeText(getApplicationContext(), "此泵站第二路视频不存在。", Toast.LENGTH_SHORT).show();

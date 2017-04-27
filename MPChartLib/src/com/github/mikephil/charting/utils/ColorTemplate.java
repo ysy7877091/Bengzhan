@@ -6,6 +6,7 @@ import android.graphics.Color;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Class that holds predefined color integer arrays (e.g.
@@ -61,14 +62,17 @@ public class ColorTemplate {
     };
     public static final int[] SW_Simaple={
         rgb("#C3BEBD"), rgb("#00CBFB"), rgb("#FFFA05"), rgb("#FF242A"), rgb("#FE00F7"),
-        rgb("#9B0005")
+        rgb("#9B0005"), rgb("#ff2121")
 
+    };
+    public static final int[] SINGLE_COLORS ={
+            rgb("#65c6bb")
     };
     public static final int[] YL_Simaple={
             rgb("#FFC6F7"), rgb("#FE00F7"), rgb("#C500BE"), rgb("#8E0090"), rgb("#9B0005"),
             rgb("#C60005"), rgb("#FF0005"), rgb("#FF9305"), rgb("#FFC905"), rgb("#FFFA05"),
             rgb("#2FFF00"), rgb("#3E9609"), rgb("#0066FA"), rgb("#0098FD"), rgb("#00CBFB"),
-            rgb("#9AFEFD"), rgb("#C3BEBD")
+            rgb("#9AFEFD"), rgb("#C3BEBD"),rgb("#ff2121")
     };
 
     /**

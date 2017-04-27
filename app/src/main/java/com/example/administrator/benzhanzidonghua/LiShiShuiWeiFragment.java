@@ -10,16 +10,18 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
-import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.charts.HorizontalBarChart;
 import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
 import com.vanpeng.javabeen.ShuiWeiBaoJing;
 
 import java.util.ArrayList;
@@ -32,14 +34,14 @@ import java.util.List;
  */
 
 public class LiShiShuiWeiFragment extends Fragment {
-    private LineChart lineChart;
+    private HorizontalBarChart  barChart;
     private MyProgressDialog progressDialog;
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         inflater=LayoutInflater.from(getActivity());
         View view=inflater.inflate(R.layout.jishuidianfragment_layout,container,false);
-        lineChart=(LineChart) view.findViewById(R.id.lineChart);
+        barChart=(HorizontalBarChart) view.findViewById(R.id.lineChart);
         getBundleData();
         return view;
     }
@@ -51,7 +53,7 @@ public class LiShiShuiWeiFragment extends Fragment {
         String EndTime = bundle.getString("EndTime");
         RequestData(ID,StartTime,EndTime);
     }
-    //设置图表数据
+   /* //设置图表数据
     private void setTuBiao(List<ShuiWeiBaoJing> list){
         lineChart.setDescription("");
         lineChart.setDrawGridBackground(false);
@@ -79,9 +81,9 @@ public class LiShiShuiWeiFragment extends Fragment {
         mLegend.setEnabled(false);
         // modify the legend ...
         //mLegend.setPosition(LegendPosition.LEFT_OF_CHART);
-        /*mLegend.setForm(Legend.LegendForm.CIRCLE);// 样式
+        *//*mLegend.setForm(Legend.LegendForm.CIRCLE);// 样式
         mLegend.setFormSize(6f);// 字体
-        mLegend.setTextColor(Color.WHITE);// 颜色*/
+        mLegend.setTextColor(Color.WHITE);// 颜色*//*
 
         lineChart.animateXY(2500,2500);
 //y轴数据
@@ -98,10 +100,10 @@ public class LiShiShuiWeiFragment extends Fragment {
             xValues.add(list.get(i).getShiJian());
         }
 
-       LineDataSet dataSet1; /*= new LineDataSet(yVals1, "七星彩");//设置折线点数据
+       LineDataSet dataSet1; *//*= new LineDataSet(yVals1, "七星彩");//设置折线点数据
         dataSet1.setLineWidth(2.5f);//折线的宽
         dataSet1.setCircleSize(5.5f);//折线的圆点大小
-        dataSet1.setHighLightColor(Color.rgb(244, 117, 117));*/
+        dataSet1.setHighLightColor(Color.rgb(244, 117, 117));*//*
         //dataSet1.setDrawValues(true);
         //判断图表中原来是否有数据
         if(lineChart.getData()!=null&&lineChart.getData().getDataSetCount()>0){
@@ -121,7 +123,7 @@ public class LiShiShuiWeiFragment extends Fragment {
             lineChart.setData(lineData);//设置折现数据
             //Toast.makeText(getActivity(), "如无数据，请点击屏幕", Toast.LENGTH_LONG).show();
         }
-    }
+    }*/
     //请求数据
     private void RequestData(final String ID,final String StartTime,final String EndTime ){
         progressDialog = new MyProgressDialog(getActivity(),false,"数据加载中");
@@ -190,5 +192,123 @@ public class LiShiShuiWeiFragment extends Fragment {
         }
         return list;
     }
+    private void setTuBiao(List<ShuiWeiBaoJing> list){
 
+            Float[] yl = new Float[list.size()];//雨量
+            String[] appName = new String[list.size()];//时间
+
+            float start = 0f;
+            ArrayList<BarEntry> yVals1 = new ArrayList<BarEntry>();
+            barChart.getXAxis().setAxisMinValue(start);
+
+
+            for (int i = 0; i < list.size(); i++) {
+                if (list.size() > 0) {
+                        yl[i] = Float.parseFloat(list.get(i).getShuiWei());//雨量值
+
+                        appName[i] = list.get(i).getShiJian();//时间
+
+                        yVals1.add(new BarEntry(yl[i]/100,i));
+
+                }
+            }
+
+
+            barChart.setDrawBarShadow(false);
+            barChart.setDrawValueAboveBar(true);
+            barChart.setDescription("");
+            //barChart.setMaxVisibleValueCount(20);//显示多少数据 其余滑动才能看见
+            barChart.setPinchZoom(false);
+            barChart.setDrawGridBackground(false);
+            // 是否可以缩放
+            barChart.setScaleEnabled(true);
+            // 集双指缩放
+            barChart.setPinchZoom(false);
+            // 隐藏右边的坐标轴
+            barChart.getAxisRight().setEnabled(false);
+            //动画
+            barChart.animateY(2500);
+            barChart.animateX(2500);
+            //X轴
+            XAxis xAxis = barChart.getXAxis();
+            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+            //xAxis.setTypeface(mTfLight);
+            xAxis.setDrawGridLines(false);
+            xAxis.setSpaceBetweenLabels(1);
+            xAxis.setDrawLabels(true);//是否显示X轴数值
+            //xAxis.setGranularity(1f); // only intervals of 1 day
+            //xAxis.setLabelCount(objects.length,true);//label长度=返回数据长度
+            //xAxis.setValueFormatter(xAxisFormatter);//X轴数据
+            xAxis.setTextSize(8);
+            xAxis.setAxisMinValue(-0.5f); //设置x轴坐标起始值为-0.5 防止其实条形图被切去一半
+
+            //AxisValueFormatter custom = new MyAxisValueFormatterYL();
+            //Y轴
+            YAxis leftAxis = barChart.getAxisLeft();
+            //leftAxis.setTypeface(mTfLight);
+            leftAxis.setLabelCount(4, false);//设置y轴数据个数
+            //leftAxis.setLabelCount(8, false);
+            //leftAxis.setValueFormatter(custom);
+            leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
+            leftAxis.setSpaceTop(15f);
+            leftAxis.setAxisMinValue(0f); // this replaces setStartAtZero(true)
+            leftAxis.setAxisMaxValue(10f); // this replaces setStartAtZero(true)
+            leftAxis.setLabelCount(5, false);//设置y轴数据个数
+            Legend mLegend = barChart.getLegend(); //设置比例图
+            mLegend.setEnabled(false);//不绘制图例
+
+            //可以设置一条警戒线，如下：
+            LimitLine ll = new LimitLine(6, "");//第一个参数为警戒线在坐标轴的位置，第二个参数为警戒线描述
+            ll.setLineColor(Color.rgb(255,33,33));
+            ll.setLineWidth(1f);
+            ll.setTextColor(Color.GRAY);
+            ll.setTextSize(12f);
+            // .. and more styling options
+            leftAxis.addLimitLine(ll);
+
+
+            BarDataSet set1;
+            //判断图表中原来是否有数据
+            if (barChart.getData() != null && barChart.getData().getDataSetCount() > 0) {
+                set1 = (BarDataSet) barChart.getData().getDataSetByIndex(0);
+                //set1 = new BarDataSet(yVals1,"");
+                set1.setYVals(yVals1);//设置图表柱形图数值
+                barChart.getData().notifyDataChanged();
+                barChart.notifyDataSetChanged();
+
+            } else {
+                set1 = new BarDataSet(yVals1, "雨量监测");
+                set1.setBarSpacePercent(30f);//设置柱间空白的宽度
+                //set1.setBarSpacePercent(10);
+                // set custom labels and colors
+                //设置柱状图颜色，第一个color.rgb为第一个柱状图颜色。以此类推
+                //set1.setColors(new int[]{Color.rgb(255,241,226),Color.rgb(155,241,226)});
+                ArrayList<IBarDataSet> dataSets = new ArrayList<IBarDataSet>();
+                dataSets.add(set1);
+
+                //BarData data = new BarData(dataSets);
+                BarData data = new BarData(appName,dataSets);
+                data.setValueTextSize(7f);
+                data.setDrawValues(true);
+                data.setValueTextColor(Color.BLACK);
+                //data.setValueFormatter(new CustomerValueFormatter());
+                //data.setValueTypeface(mTfLight);
+                //data.setBarWidth(0.8f);
+                //mChart.setExtraOffsets(0,0,0,200);//此种方法可以一次设置上下左右偏移量。根据自己数据哪个地方显示不全，对应调用方法。
+                barChart.setData(data);// 设置数据
+                barChart.setVisibleYRangeMaximum(100,YAxis.AxisDependency.LEFT);//水平的设置x轴数据可见个数
+            }
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(progressDialog!=null){
+            if(progressDialog.isShowing()){
+                progressDialog.dismiss();
+            }
+            progressDialog=null;
+        }
+    }
 }

@@ -260,7 +260,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="15dp"
                 android:src="@mipmap/jiankong1"
-                android:onClick="btn摄像头1_OnClick"/>
+                android:onClick="btn1_OnClick"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -285,7 +285,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="15dp"
                 android:src="@mipmap/jiankong1"
-                android:onClick="btn摄像头2_OnClick"/>
+                android:onClick="btn2_OnClick"/>
 
             <TextView
                 android:layout_width="wrap_content"

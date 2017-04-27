@@ -1,6 +1,7 @@
 package com.dataandtime.data;
 
 import android.app.Activity;
+import android.app.FragmentManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -411,7 +412,9 @@ public class DatePickerDialog extends DialogFragment implements View.OnClickList
         mCloseOnSingleTapDay = closeOnSingleTapDay;
     }
 
-    static abstract interface OnDateChangedListener {
+
+
+	static abstract interface OnDateChangedListener {
 		public abstract void onDateChanged();
 	}
 

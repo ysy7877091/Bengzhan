@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 
 import com.vanpeng.javabeen.VideoMonitoring;
@@ -30,6 +31,8 @@ public class JianKongList extends AppCompatActivity{
         ImageButton outButton=(ImageButton)findViewById(R.id.outButton);//室外监控
         inButton.setOnClickListener(new JianKongListListener());
         outButton.setOnClickListener(new JianKongListListener());
+        Button video_button =(Button)findViewById(R.id.video_button);
+        video_button.setOnClickListener(new JianKongListListener());
     }
     private void getIntentData(){
         //获取传过来的室内室外监控
@@ -54,6 +57,7 @@ public class JianKongList extends AppCompatActivity{
                                         out_intent.putExtra("VideoMonitoring",out_VideoMonitoring);
                                         startActivity(out_intent);
                                         break;
+                case R.id.video_button:finish();break;
             }
         }
     }

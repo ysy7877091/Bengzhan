@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#00000000"
+    android:orientation="vertical">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/x45"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        >
+
+    <ImageView
+        android:id="@+id/iv_youliang_zhuangtai"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:src="@mipmap/youliang_huangse"/>
+
+    <TextView
+        android:id="@+id/tv_youliangbaojing_carNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textColor="#000000"
+        android:textSize="15sp"
+        android:text="" />
+
+    <TextView
+        android:id="@+id/tv_youliangbaojing_shijian"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textColor="#000000"
+        android:textSize="15sp"
+        android:text="" />
+
+    <TextView
+        android:id="@+id/tv_youliangbaojing_youliang"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textColor="#000000"
+        android:textSize="15sp"
+        android:text="" />
+
+    </LinearLayout>
+
+</LinearLayout>

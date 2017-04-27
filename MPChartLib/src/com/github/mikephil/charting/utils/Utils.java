@@ -19,6 +19,7 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 
+import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.YAxis.AxisDependency;
 import com.github.mikephil.charting.formatter.DefaultValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
@@ -341,6 +342,22 @@ public abstract class Utils {
         int[] ret = new int[integers.size()];
 
         for (int i = 0; i < ret.length; i++) {
+
+            ret[i] = integers.get(i).intValue();
+            Log.e("warn","label:"+ret[i]);
+        }
+
+        return ret;
+    }
+    //改变之后的
+    public static int[] convertIntegers1(List<Integer> integers,Legend l) {
+
+        int[] ret = new int[integers.size()];
+
+        for (int i = 0; i < ret.length; i++) {
+            if(i==integers.size()-1){
+                l.setForm(Legend.LegendForm.LINE);
+            }
             ret[i] = integers.get(i).intValue();
         }
 

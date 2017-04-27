@@ -1,5 +1,8 @@
 package com.example.administrator.benzhanzidonghua;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -10,27 +13,38 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.vanpeng.javabeen.BeiDouCarLieBiaoBeen;
+import com.com.vanpeng.Adapter.BD_POPListviewAdapter;
+import com.vanpeng.javabeen.BD_carPOPListView;
 
 import org.ksoap2.SoapEnvelope;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.AndroidHttpTransport;
 
-import java.util.Calendar;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Administrator on 2017/2/20 0020.
  * 车辆信息详情
  */
 
-public class CarInformation extends AppCompatActivity {
+public class CarInformation extends AppCompatActivity implements AdapterView.OnItemClickListener{
     private MyProgressDialog progressDialog;
     private Bitmap car_ph=null;
     private Bitmap per_photo=null;
@@ -38,17 +52,20 @@ public class CarInformation extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.carinformation_layout);
+        //Button person_Information = (Button)findViewById(R.id.person_Information);
+        ImageButton person_Information= (ImageButton) findViewById(R.id.person_Information);
+        person_Information.setOnClickListener(new CarInformationListener());
+
+        Button car_meau = (Button)findViewById(R.id.car_caidan);
+        car_meau.setOnClickListener(new CarInformationListener());
+
         Button car_Back = (Button)findViewById(R.id.car_Back);
-        car_Back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        car_Back.setOnClickListener(new CarInformationListener());
+
         progressDialog = new MyProgressDialog(CarInformation.this, false, "加载中...");
         new Thread( networkTask).start();
-
     }
     private void init(String [] arr){
         /*Button BD_meau = (Button)findViewById(R.id.BD_meau);
@@ -56,25 +73,44 @@ public class CarInformation extends AppCompatActivity {
         TextView car_BianHao = (TextView)findViewById(R.id.car_BianHao);//是否在线
         if(arr[5].equals("1")){arr[5]="不在线";}else{arr[5]="在线";}
         car_BianHao.setText(arr[5].trim());
+
         TextView car_zu=(TextView)findViewById(R.id.car_zu); //所属分组
-        car_zu.setText(arr[2]);
+        if(!arr[2].equals("anyType{}")){
+            car_zu.setText(arr[2]);
+        }
         TextView car_name=(TextView)findViewById(R.id.car_name);//车主姓名
-        car_name.setText(arr[3]);
+        if(arr[3].equals("anyType{}")){
+            car_name.setText("");
+        }else{
+            car_name.setText(arr[3]);
+        }
         TextView telephone=(TextView)findViewById(R.id.telephone);//联系电话
-        telephone.setText(arr[4]);
+        if(arr[4].equals("anyType{}")){
+            telephone.setText("");
+        }else{
+            telephone.setText(arr[4]);
+        }
         TextView car_tyle=(TextView)findViewById(R.id.car_tyle);//车辆型号
-        car_tyle.setText(arr[1]);
+        if(arr[1].equals("anyType{}")){
+            car_tyle.setText("");
+        }else{
+            car_tyle.setText(arr[1]);
+        }
         TextView car_num=(TextView)findViewById(R.id.car_num);//车牌号
-        car_num.setText(arr[0]);
+        if(arr[0].equals("anyType{}")){
+            car_num.setText("");
+        }else{
+            car_num.setText(arr[0]);
+        }
         ImageView car_photo =(ImageView) findViewById(R.id.car_photo);//车辆照片
-        if(arr[10]!=null||!arr[10].equals("")) {
+        if(arr[10]!=null||!arr[10].equals("")||!arr[10].equals("anyType{}")) {
             car_ph = stringtoBitmap(arr[10]);
             if (car_ph != null) {
                 car_ph = zoomImg(car_ph, car_photo.getWidth(), car_photo.getHeight());
                 car_photo.setImageBitmap(car_ph);
             }
         }
-            ImageView person_photo = (ImageView) findViewById(R.id.person_photo);//人员照片
+            /*ImageView person_photo = (ImageView) findViewById(R.id.person_photo);//人员照片
 
             if (!arr[11].equals("") || arr[11] != null) {
                 per_photo = stringtoBitmap(arr[11]);
@@ -82,9 +118,89 @@ public class CarInformation extends AppCompatActivity {
                     per_photo = zoomImg(per_photo, person_photo.getWidth(), person_photo.getHeight());
                     person_photo.setImageBitmap(per_photo);
                 }
+            }*/
+
+
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        switch (position){
+            case 1:
+                closePopwindow();
+                Intent intent = new Intent(CarInformation.this,YouLiangBaoJingTongJi.class);
+                intent.putExtra("allCarNum",getIntent().getStringExtra("allCarNum"));
+                startActivity(intent);
+                finish();
+                break;
+            case 2:
+                closePopwindow();
+                Intent Oil_intent = new Intent(CarInformation.this,LiChengYouHaoTongJi.class);
+                startActivity(Oil_intent);
+                finish();
+                break;
+            /*case 3:
+                    closePopwindow();
+                    Intent Work_intent = new Intent(BeiDouCarLieBiao.this,WorkWarnLog.class);
+                    startActivity(Work_intent);
+                    break;*/
+            case 3:
+                closePopwindow();
+                Intent intent2 = new Intent(CarInformation.this,JiaOilJiLU.class);
+                if(getIntent().getStringExtra("personInformation")==null){
+                    SharedPreferences sp =getSharedPreferences("login",1);
+                    String login=sp.getString("value","0");
+                    Log.e("warn",login+":登录信息");
+                    if(login.equals("0")){
+                        Toast.makeText(this,"数据丢失无法进入，请重新进入应用", Toast.LENGTH_SHORT).show();
+                    }else {
+                        intent2.putExtra("personInformation", login);
+                    }
+                }else {
+                    intent2.putExtra("personInformation", getIntent().getStringExtra("personInformation"));
+                }
+                intent2.putExtra("ALLcarNum",getIntent().getStringExtra("allCarNum"));
+                startActivity(intent2);
+                finish();
+                //判断权限
+                    /*String str [] = getIntent().getStringExtra("personInformation").split(",");
+                    if(str [6].equals("0")){
+                        Intent intent3 = new Intent(BeiDouCarLieBiao.this,AddOilHistoryWrite.class);
+                        intent3.putExtra("personInformation",getIntent().getStringExtra("personInformation"));
+                        intent3.putExtra("ALLcarNum",getAllCarNum());
+                        startActivity(intent3);
+                    }else{
+                        Intent intent2 = new Intent(BeiDouCarLieBiao.this,JiaOilJiLU.class);
+                        intent2.putExtra("personInformation",getIntent().getStringExtra("personInformation"));
+                        intent2.putExtra("ALLcarNum",getAllCarNum());
+                        startActivity(intent2);
+                    }*/
+                break;
+            case 4: finish();break;
+        }
+    }
+
+    private class CarInformationListener implements View.OnClickListener{
+
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()){
+                case R.id.car_Back:
+                                    finish();
+                                    break;
+                case R.id.car_caidan:
+                                        BD_popWindow();
+                                        break;
+                case R.id.person_Information:
+                                                Intent PER_intent = new Intent(CarInformation.this,BeiDouPersonInformation.class);
+                                                PER_intent.putExtra("perID",getIntent().getStringExtra("PERID").toString());
+                                                startActivity(PER_intent);
+                                                break;
+                case R.id.meau_x:
+                                    closePopwindow();
+                                    break;
             }
-
-
+        }
     }
     //请求车辆信息
     Runnable networkTask = new Runnable() {
@@ -97,7 +213,7 @@ public class CarInformation extends AppCompatActivity {
                 // 调用的方法名称
                 String methodName = "Get_CarInfo";
                 // EndPoint
-                String endPoint = "http://beidoujieshou.sytxmap.com:5963/GPSService.asmx";
+                String endPoint = Path.get_ZanShibeidouPath();
                 // SOAP Action
                 String soapAction = "http://tempuri.org/Get_CarInfo";
                 // 指定WebService的命名空间和调用的方法名
@@ -178,6 +294,7 @@ public class CarInformation extends AppCompatActivity {
             }
         }
     };
+
     public Bitmap stringtoBitmap(String string){
         //将base64字符串转换成Bitmap类型
         if(string==null||string.equals("anyType{}")){
@@ -327,6 +444,81 @@ public class CarInformation extends AppCompatActivity {
                  }
               }
     };*/
+    private PopupWindow popupWindow;
+    private void BD_popWindow(){
+
+        RelativeLayout top = (RelativeLayout) findViewById(R.id.bd_top);
+        //RelativeLayout rllll = (RelativeLayout) findViewById(R.id.rllll);
+        /*WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        int width = wm.getDefaultDisplay().getWidth();
+        int height = wm.getDefaultDisplay().getHeight();*/
+        //title.getHeight();
+        View addview = LayoutInflater.from(this).inflate(R.layout.bdcarpopwindow_layout, null);
+        addinit(addview);
+        popupWindow = new PopupWindow(addview, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);//2,3参数为宽高
+        //改变屏幕透明度
+       /* WindowManager.LayoutParams params = this.getWindow().getAttributes();
+        params.alpha = 0.9f;
+        getWindow().setAttributes(params);*/
+        //ll.getBackground().setAlpha(50);
+        popupWindow.setTouchable(true);//popupWindow可触摸
+        popupWindow.setOutsideTouchable(true);//点击popupWindow以外区域消失
+        popupWindow.setTouchInterceptor(new View.OnTouchListener() {
+
+            @Override
+            public boolean onTouch(View arg0, MotionEvent arg1) {
+                // TODO Auto-generated method stub
+                Log.i("mengdd", "onTouch : ");
+                return false;
+            }
+        });
+       /* //监听popwindow消失的事件
+        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                closePopwindow();
+            }
+        });*/
+        // 如果不设置PopupWindow的背景，无论是点击外部区域还是Back键都无法dismiss弹框
+        // 我觉得这里是API的一个bug
+        popupWindow.setBackgroundDrawable(getResources().getDrawable(R.color.white));
+        //popupWindow.setBackgroundDrawable(new BitmapDrawable());
+        // 设置好参数之后再show
+        // popupWindow.showAsDropDown(top,0, 0);//在view(top)控件正下方，以view为参照点第二个参数为popwindow距离view的横向距离，
+        //第三个参数为y轴即popwindow距离view的纵向距离
+        popupWindow.showAtLocation(top, Gravity.TOP,0,0);
+    }
+    private void closePopwindow() {
+
+        if(popupWindow!=null){
+            popupWindow.dismiss();
+            popupWindow = null;
+        }
+    }
+    private void addinit(View view){
+        List<BD_carPOPListView> list = new ArrayList<>();
+        int [] iv = {R.mipmap.youliangbaobiao,R.mipmap.licheng,R.mipmap.jiayoujilu,R.mipmap.tuichubeidou};
+        String [] tv={"油量报警统计","里程油耗统计","加油记录","退出"};
+        for (int i=0;i<iv.length;i++){
+            BD_carPOPListView bd =new BD_carPOPListView();
+            bd.setImageview(iv[i]);
+            bd.setText(tv[i]);
+            list.add(bd);
+        }
+        ListView listview=(ListView)view.findViewById(R.id.BD_carListView);
+        View headerView = LayoutInflater.from(this).inflate(R.layout.listviewhead,null);
+        Button meau_x = (Button)headerView.findViewById(R.id.meau_x);
+        meau_x.setOnClickListener(new CarInformationListener());
+        listview.setAdapter(new BD_POPListviewAdapter(CarInformation.this,list));
+        listview.addHeaderView(headerView);
+        listview.setOnItemClickListener(this);
+    }
+
+
+
+
+
+
     @Override
     protected void onDestroy() {
         super.onDestroy();

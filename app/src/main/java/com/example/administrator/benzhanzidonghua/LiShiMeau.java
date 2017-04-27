@@ -33,11 +33,11 @@ public class LiShiMeau extends AppCompatActivity {
 
     private QiTiFragment qiTi;//气体fragment
     private LiShiShuiWeiFragment water;//水位fragment
-    private RelativeLayout LSlist_top;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.lishichaxunmeau_layout);
         CommonMethod.setStatuColor(this,R.color.blue);
         getIntentData();
@@ -47,8 +47,7 @@ public class LiShiMeau extends AppCompatActivity {
         //实例化fragment
         qiTi = new QiTiFragment();
         water =new LiShiShuiWeiFragment();
-        LSlist_top = (RelativeLayout)findViewById(R.id.LSlist_top);
-        LSlist_top.setVisibility(View.VISIBLE);
+
         //返回view
         //Log.e("warn","历史菜单界面"+"wakaka");
         Button LSM_button = (Button)findViewById(R.id.LSM_button);
@@ -108,8 +107,7 @@ public class LiShiMeau extends AppCompatActivity {
         ShuiWeiImage_IV.setVisibility(View.VISIBLE);
         tv_LiShiQiTiText.setTextColor(getResources().getColor(R.color.btn_login_normal));
         QiTiImage_IV.setVisibility(View.INVISIBLE);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        LSlist_top.setVisibility(View.GONE);
+        //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         switchFragment(qiTi,water);
     }
     //气体点击事件
@@ -119,7 +117,6 @@ public class LiShiMeau extends AppCompatActivity {
         tv_LiShiQiTiText.setTextColor(getResources().getColor(R.color.yl04));
         QiTiImage_IV.setVisibility(View.VISIBLE);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        LSlist_top.setVisibility(View.VISIBLE);
         switchFragment(water,qiTi);
     }
     private class LiShiMeauListener implements View.OnClickListener{

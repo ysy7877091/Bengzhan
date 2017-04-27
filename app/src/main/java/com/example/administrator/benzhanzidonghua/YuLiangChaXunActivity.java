@@ -1,7 +1,6 @@
 package com.example.administrator.benzhanzidonghua;
 
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,6 +14,7 @@ import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
@@ -23,11 +23,17 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.vanpeng.javabeen.StringTemplate;
+import com.vanpeng.javabeen.YuliangChaXunbeen;
 
+import org.ksoap2.SoapEnvelope;
+import org.ksoap2.serialization.SoapObject;
+import org.ksoap2.serialization.SoapSerializationEnvelope;
+import org.ksoap2.transport.AndroidHttpTransport;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-
-import static android.os.Build.ID;
 
 /**
  * Created by Administrator on 2017/1/6.
@@ -38,10 +44,13 @@ public class YuLiangChaXunActivity extends AppCompatActivity {
     private BarChart barChart;
     private MyProgressDialog progressDialog;
     private MyProgressDialog progressDialog1;
+    private String CurrentTime;
+    private String StringNewTime;
+    private String agoTime24;
+    private List<YuliangChaXunbeen> list_data = new ArrayList<>();
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.yuliangchaxunactivity_layout);
         init();
     }
@@ -51,7 +60,15 @@ public class YuLiangChaXunActivity extends AppCompatActivity {
         barChart=(BarChart)findViewById(R.id.HBchart1);
         Intent intent =getIntent();
         String ID = intent.getStringExtra("ID");
+        Log.e("warn","泵站ID："+ID);
         String panduan = intent.getStringExtra("panduan");
+
+
+
+
+
+
+
         if(panduan.equals("00")){//只通过ID获取数据 即24小时之内数据
             RequestDataMethod(ID);
         }else{
@@ -69,7 +86,25 @@ public class YuLiangChaXunActivity extends AppCompatActivity {
         }
     }
     //只通过ID获取数据 即24小时之内数据
-    private void RequestDataMethod(String id){
+    private void RequestDataMethod(final String id){
+
+        Date date = new Date();
+        long newTime=date.getTime();
+        Date datenewTime = new Date(newTime);
+
+        long Time24 = newTime-24*60*60*1000;
+        Date dateTime24  = new Date(Time24);
+
+
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        StringNewTime = formatter.format(datenewTime);;
+        Log.e("warn",StringNewTime);
+
+        agoTime24 = formatter.format(dateTime24 );
+        Log.e("warn",agoTime24);
+
+
         progressDialog = new MyProgressDialog(YuLiangChaXunActivity.this,false,"数据加载中");
         if(id.equals("")||id==null){
             progressDialog.dismiss();
@@ -80,17 +115,81 @@ public class YuLiangChaXunActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     super.run();
-                    String methodName = "Get24HourJiangYuLiangTongJiResult";//方法名
-                    String path="http://ysservices.sytxmap.com/JCDLXXGXPT.asmx";//请求地址
-                    String SoapFileName = "assets/yuliang24lishichaxun.xml";//读取的soap协议xml文件名称
-                    String soap = CommonMethod.ReadSoap(SoapFileName);
-                    soap=soap.replaceAll("string1",ID);
-                    Log.e("warn",soap);
-                    byte [] date=soap.getBytes();//soap协议转为字符数组
-                    String result=CommonMethod.Request(path,date,methodName);
-                    Message msg = Message.obtain();
-                    msg.obj=result;
-                    Hour24handler.sendMessage(msg);
+
+                    try{
+                        // 命名空间
+                        String nameSpace = "http://tempuri.org/";
+                        // 调用的方法名称
+                        String methodName = "Get_CheckRainFallHistory_List";
+                        // EndPoint
+                        String endPoint =Path.get_ZanShibeidouPath();
+                        // SOAP Action
+                        String soapAction = "http://tempuri.org/Get_CheckRainFallHistory_List";
+                        // 指定WebService的命名空间和调用的方法名
+                        SoapObject rpc = new SoapObject(nameSpace, methodName);
+                        //设置需调用WebService接口需要传入的参数日期
+                /*String data = water_year.getText().toString()+"-"+water_Month.getText().toString()+"-"+water_day.getText().toString();
+                rpc.addProperty("",data);*/
+                        rpc.addProperty("id",id);
+                        rpc.addProperty("startTime",agoTime24);
+                        rpc.addProperty("endTime",StringNewTime);
+                        // 生成调用WebService方法的SOAP请求信息,并指定SOAP的版本
+                        SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER10);
+                        envelope.dotNet = true;
+                        envelope.setOutputSoapObject(rpc);
+
+                        AndroidHttpTransport ht = new AndroidHttpTransport(endPoint);
+                        ht.debug=true;
+                        Log.e("warn","50");
+                        try {
+                            // 调用WebService
+                            ht.call(soapAction, envelope);
+                        } catch (Exception e) {
+                            Message msg = Message.obtain();
+                            msg.what=0;
+                            Hour24handler.sendMessage(msg);
+                        }
+
+                        SoapObject object;
+                        // 开始调用远程方法
+                        Log.e("warn","60");
+
+
+                        object = (SoapObject) envelope.getResponse();
+                        Log.e("warn","64");
+                        // 得到服务器传回的数据 数据时dataset类型的
+                        int count1 = object.getPropertyCount();
+                        Log.e("warn",String.valueOf(count1));
+                        if(count1==0){
+                            Toast.makeText(YuLiangChaXunActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if(count1>0) {
+                            StringBuffer sb = new StringBuffer();
+                            for(int i=0;i<count1;i++) {
+                                Log.e("warn", "-----------------------------");
+                                SoapObject soapProvince = (SoapObject) object.getProperty(i);
+                                YuliangChaXunbeen yl = new YuliangChaXunbeen();
+                                if(soapProvince.getProperty("ValueX").toString().equals("0.00")||soapProvince.getProperty("ValueX").toString().equals("0.0")||soapProvince.getProperty("ValueX").toString().equals("0")) {
+                                }else{
+                                    Log.e("warn", soapProvince.getProperty("TIME").toString() + ":");
+                                    yl.setTIME(soapProvince.getProperty("TIME").toString());
+                                    Log.e("warn", soapProvince.getProperty("ValueX").toString() + ":");
+                                    yl.setValueX(soapProvince.getProperty("ValueX").toString());
+                                    list_data.add(yl);
+                                }
+                            }
+                            Message msg = Message.obtain();
+                            msg.what=1;
+                            msg.obj=sb.toString();
+                            Hour24handler.sendMessage(msg);
+                        }
+                    } catch (Exception e){
+                        Message msg = Message.obtain();
+                        msg.what=0;
+                        Hour24handler.sendMessage(msg);
+                    }
+
                 }
             }.start();
         }
@@ -101,57 +200,44 @@ public class YuLiangChaXunActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             String val=(String) msg.obj;
-            Log.e("warn",val);
-            if(val.equals("")){
+            //Log.e("warn",val);
+            if(val==null){
                 Toast.makeText(getApplicationContext(),"无历史信息",Toast.LENGTH_SHORT).show();
                 progressDialog.dismiss();
             }else {
                 progressDialog.dismiss();
-                int k=0;
 
-                String[] objects = val.split("\\|");
-                //计算时间数组的长度
-                for(int a=0;a<objects.length;a++) {
-                    String[] array = objects[a].split(",");
-                    if (array[1].equals("0")) {
-                        continue;
-                    }else{
-                        ++k;
-                    }
-                }
-                Log.e("warn",String.valueOf(k)+":122");
-                Float[] yl = new Float[objects.length];//雨量
-                String[] Time = new String[k];//时间
+
+                Float[] yl = new Float[list_data.size()];//雨量
+                String[] Time = new String[list_data.size()];//时间
                 List<Integer> list = new ArrayList<Integer>();//装载柱状图颜色
                 ArrayList<BarEntry> yVals1 = new ArrayList<BarEntry>();//柱形图数值
 
-                int len = StringTemplate.YLStringTemplate.length;//数据长度
+               int len = StringTemplate.YLStringTemplate.length+1;//数据长度
 
                 int[] myColors = new int[len];//取颜色长度
                 String[] lbls = new String[len];//取比量值长度
 
                 for (int i = 0; i < len; i++) {//示例数据
-                    lbls[i] = StringTemplate.YLStringTemplate[i];//示例颜色描述说明
-                    myColors[i] = ColorTemplate.YL_Simaple[i];//示例颜色
+                    if(i==len-1){
+                        lbls[i] = "警戒线";//示例颜色描述说明
+                        myColors[i] =Color.rgb(255,33,33);//示例颜色
+                    }else{
+                        lbls[i] = StringTemplate.YLStringTemplate[i];//示例颜色描述说明
+                        myColors[i] = ColorTemplate.YL_Simaple[i];//示例颜色
+                    }
+
                 }
-                int j=0;
-                int b=0;
-                for (int i = 0; i < objects.length; i++) {
-                    if (objects[i].length() > 0) {
-                        String[] arr = objects[i].split(",");
-                        if (arr.length > 1) {
-                            if(arr[1].equals("0")){ j++;continue;}//如果雨量为0，不显示
-                            else{
-                                arr[0]=arr[0].substring(0,16);
-                                Time[b] = arr[0];
-                                yVals1.add(new BarEntry(Float.parseFloat(arr[1]), b));//Float.parseFloat(arr[1]
-                                ColorMethod(Float.parseFloat(arr[1]),list);//
-                                b++;
-                            }
-                        }
+
+                for (int i = 0; i < list_data.size(); i++) {
+                    if (list_data.size() > 0) {
+
+                                Time[i] = list_data.get(i).getTIME();
+                                yVals1.add(new BarEntry(Float.parseFloat(list_data.get(i).getValueX()), i));//Float.parseFloat(arr[1]
+                                ColorMethod(Float.parseFloat(list_data.get(i).getValueX()),list);//
                     }
                 }
-                if(j==objects.length){//无雨量信息 结束此方法
+                if(list_data.size()==0){//无雨量信息 结束此方法
                     Toast.makeText(YuLiangChaXunActivity.this, "无雨量信息", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -177,15 +263,29 @@ public class YuLiangChaXunActivity extends AppCompatActivity {
                 xAxis.setDrawGridLines(false);
                 xAxis.setSpaceBetweenLabels(1);
                 xAxis.setDrawLabels(true);//是否显示X轴数值
-                xAxis.setLabelRotationAngle(-90);
+                //xAxis.setLabelRotationAngle(-90);
+
                 YAxis leftAxis = barChart.getAxisLeft();
                 //leftAxis.setTypeface(mTfLight);
-                leftAxis.setLabelCount(4, false);//设置y轴数据个数
+                leftAxis.setLabelCount(5, false);//设置y轴数据个数
+                leftAxis.setAxisMaxValue(100f);
                 //leftAxis.setLabelCount(8, false);
                 //leftAxis.setValueFormatter(custom);
                 leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
                 leftAxis.setSpaceTop(15f);
                 leftAxis.setAxisMinValue(0f);
+
+
+                //可以设置一条警戒线，如下：
+                LimitLine ll = new LimitLine(60, "");//第一个参数为警戒线在坐标轴的位置，第二个参数为警戒线描述
+                ll.setLineColor(Color.rgb(255,33,33));
+                ll.setLineWidth(1f);
+                ll.setTextColor(Color.GRAY);
+                ll.setTextSize(12f);
+                // .. and more styling options
+                leftAxis.addLimitLine(ll);
+
+
 
                 Legend l = barChart.getLegend();//设置比例图
                 l.setPosition(Legend.LegendPosition.RIGHT_OF_CHART);
@@ -246,19 +346,80 @@ public class YuLiangChaXunActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     super.run();
-                    String methodName = "GetHisJiangYuLiangSearchResult";//方法名
-                    String path="http://ysservices.sytxmap.com/JCDLXXGXPT.asmx";//请求地址
-                    String SoapFileName = "assets/yulianglishichaxun.xml";//读取的soap协议xml文件名称
-                    String soap = CommonMethod.ReadSoap(SoapFileName);
-                    soap=soap.replaceAll("string1",StartTime);
-                    soap=soap.replaceAll("string2",EndTime);
-                    soap=soap.replaceAll("string3",id);
-                    Log.e("warn",soap);
-                    byte [] date=soap.getBytes();//soap协议转为字符数组
-                    String result=CommonMethod.Request(path,date,methodName);
-                    Message msg = Message.obtain();
-                    msg.obj=result;
-                    Hour24handler.sendMessage(msg);
+                    try{
+                        // 命名空间
+                        String nameSpace = "http://tempuri.org/";
+                        // 调用的方法名称
+                        String methodName = "Get_CheckRainFallHistory_List";
+                        // EndPoint
+                        String endPoint =Path.get_ZanShibeidouPath();
+                        // SOAP Action
+                        String soapAction = "http://tempuri.org/Get_CheckRainFallHistory_List";
+                        // 指定WebService的命名空间和调用的方法名
+                        SoapObject rpc = new SoapObject(nameSpace, methodName);
+                        //设置需调用WebService接口需要传入的参数日期
+                /*String data = water_year.getText().toString()+"-"+water_Month.getText().toString()+"-"+water_day.getText().toString();
+                rpc.addProperty("",data);*/
+                        rpc.addProperty("id",id);
+                        rpc.addProperty("startTime",StartTime);
+                        rpc.addProperty("endTime",EndTime);
+                        // 生成调用WebService方法的SOAP请求信息,并指定SOAP的版本
+                        SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER10);
+                        envelope.dotNet = true;
+                        envelope.setOutputSoapObject(rpc);
+
+                        AndroidHttpTransport ht = new AndroidHttpTransport(endPoint);
+                        ht.debug=true;
+                        Log.e("warn","50");
+                        try {
+                            // 调用WebService
+                            ht.call(soapAction, envelope);
+                        } catch (Exception e) {
+                            Message msg = Message.obtain();
+                            msg.what=0;
+                            Hour24handler.sendMessage(msg);
+                        }
+
+                        SoapObject object;
+                        // 开始调用远程方法
+                        Log.e("warn","60");
+
+
+                        object = (SoapObject) envelope.getResponse();
+                        Log.e("warn","64");
+                        // 得到服务器传回的数据 数据时dataset类型的
+                        int count1 = object.getPropertyCount();
+                        Log.e("warn",String.valueOf(count1));
+                        if(count1==0){
+                            progressDialog.dismiss();
+                            Toast.makeText(YuLiangChaXunActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if(count1>0) {
+                            StringBuffer sb = new StringBuffer();
+                            for(int i=0;i<count1;i++) {
+                                Log.e("warn", "-----------------------------");
+                                SoapObject soapProvince = (SoapObject) object.getProperty(i);
+                                YuliangChaXunbeen yl = new YuliangChaXunbeen();
+                                if(soapProvince.getProperty("ValueX").toString().equals("0.00")||soapProvince.getProperty("ValueX").toString().equals("0.0")||soapProvince.getProperty("ValueX").toString().equals("0")) {
+                                }else{
+                                    Log.e("warn", soapProvince.getProperty("TIME").toString() + ":");
+                                    yl.setTIME(soapProvince.getProperty("TIME").toString());
+                                    Log.e("warn", soapProvince.getProperty("ValueX").toString() + ":");
+                                    yl.setValueX(soapProvince.getProperty("ValueX").toString());
+                                    list_data.add(yl);
+                                }
+                            }
+                            Message msg = Message.obtain();
+                            msg.what=1;
+                            msg.obj=sb.toString();
+                            Hour24handler.sendMessage(msg);
+                        }
+                    } catch (Exception e){
+                        Message msg = Message.obtain();
+                        msg.what=0;
+                        Hour24handler.sendMessage(msg);
+                    }
                 }
             }.start();
         }

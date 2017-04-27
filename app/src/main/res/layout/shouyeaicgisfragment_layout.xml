@@ -23,11 +23,12 @@
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@mipmap/quantucclick"
+        android:src="@mipmap/dianji"
         android:layout_alignParentRight="true"
         android:layout_marginTop="20dp"
         android:layout_marginRight="20dp"
         android:id="@+id/iv_QuanTu"
+        android:visibility="gone"
         />
     <ImageView
         android:layout_width="wrap_content"
@@ -36,13 +37,14 @@
         android:layout_alignParentRight="true"
         android:layout_marginRight="20dp"
         android:id="@+id/iv_TuCeng"
+        android:layout_marginTop="20dp"
         android:layout_below="@id/iv_QuanTu"/>
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/iv_TuCeng"
-        android:src="@mipmap/dianji"
-        android:layout_alignLeft="@id/iv_QuanTu"
+        android:src="@mipmap/quantucclick"
+        android:layout_alignLeft="@id/iv_TuCeng"
         android:layout_marginTop="6dp"
         android:id="@+id/iv_search"/>
     <ImageView
@@ -58,10 +60,21 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/iv_BiaoZhu"
         android:layout_alignLeft="@id/iv_BiaoZhu"
+        android:src="@mipmap/road"
+        android:layout_marginTop="6dp"
+        android:clickable="true"
+        android:id="@+id/LuWang"
+        />
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/LuWang"
+        android:layout_alignLeft="@id/iv_BiaoZhu"
         android:src="@mipmap/qingkongguiji"
         android:layout_marginTop="6dp"
         android:clickable="true"
         android:id="@+id/QingKongGuiJi"
+        android:visibility="gone"
         />
     <RelativeLayout
         android:id="@+id/layoutLoadGISView"

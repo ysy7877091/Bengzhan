@@ -9,7 +9,8 @@
         android:id="@+id/top"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:background="#00a4e7">
+        android:background="#00a4e7"
+        android:scaleType="fitXY">
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -40,11 +41,13 @@
 
         <ImageView
             android:id="@+id/imageView"
-            android:layout_width="@dimen/x110"
-            android:layout_height="@dimen/x125"
+            android:layout_width="110dp"
+            android:layout_height="125dp"
             android:layout_marginTop="10dp"
             android:layout_gravity="center"
+            android:scaleType="fitXY"
             android:layout_marginLeft="5dp"
+            android:src="@mipmap/jiayoujilutouxiang"
            />
 
         <LinearLayout
@@ -59,7 +62,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginTop="10dp"
                 android:layout_weight="1"
-                android:background="@drawable/ssss">
+                android:background="@mipmap/bd_xiao">
 
                 <TextView
                     android:textColor="#999999"
@@ -91,7 +94,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginTop="10dp"
                 android:layout_weight="1"
-                android:background="@drawable/ssss">
+                android:background="@mipmap/bd_xiao">
 
                 <TextView
                     android:textColor="#999999"
@@ -124,7 +127,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginTop="10dp"
                 android:layout_weight="1"
-                android:background="@drawable/ssss">
+                android:background="@mipmap/bd_xiao">
 
                 <TextView
                     android:textColor="#999999"
@@ -192,7 +195,7 @@
         android:layout_width="match_parent"
         android:layout_height="35dp"
         android:layout_margin="10dp"
-        android:background="@drawable/ssss">
+        android:background="@mipmap/bd_xiao">
 
         <TextView
             android:textColor="#999999"
@@ -223,7 +226,7 @@
         android:layout_width="match_parent"
         android:layout_height="35dp"
         android:layout_margin="10dp"
-        android:background="@drawable/ssss">
+        android:background="@mipmap/bd_xiao">
 
         <TextView
             android:textColor="#999999"
@@ -266,7 +269,7 @@
                 android:layout_height="35dp"
                 android:layout_margin="10dp"
                 android:layout_weight="1"
-                android:background="@drawable/ssss">
+                android:background="@mipmap/bd_xiao">
 
                 <TextView
                     android:textColor="#999999"
@@ -299,7 +302,7 @@
                 android:layout_height="35dp"
                 android:layout_margin="10dp"
                 android:layout_weight="1"
-                android:background="@drawable/ssss"
+                android:background="@mipmap/bd_xiao"
                 android:visibility="gone">
 
                 <TextView
@@ -340,7 +343,7 @@
                 android:layout_height="35dp"
                 android:layout_margin="10dp"
                 android:layout_weight="1"
-                android:background="@drawable/ssss">
+                android:background="@mipmap/bd_xiao">
 
                 <TextView
                     android:textColor="#999999"
@@ -405,7 +408,7 @@
         android:layout_width="match_parent"
         android:layout_height="35dp"
         android:layout_margin="10dp"
-        android:background="@drawable/ssss">
+        android:background="@mipmap/bd_xiao">
 
         <TextView
             android:textColor="#999999"
@@ -434,7 +437,7 @@
         android:layout_width="match_parent"
         android:layout_height="35dp"
         android:layout_margin="10dp"
-        android:background="@drawable/ssss">
+        android:background="@mipmap/bd_xiao">
 
         <TextView
             android:textColor="#999999"

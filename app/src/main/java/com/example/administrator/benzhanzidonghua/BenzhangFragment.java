@@ -59,6 +59,7 @@ public class BenzhangFragment extends Fragment{
     }
     private void init(){
         bz_text = (TextView)view.findViewById(R.id.bz_text);
+        bz_text.setText("全部");
         bListView=(ListView)view.findViewById(R.id.bListView);
         bListView.setOnItemClickListener(new ListViewListener());
         BZ_pop =(Button)view.findViewById(R.id.BZ_pop);
@@ -101,10 +102,11 @@ public class BenzhangFragment extends Fragment{
             Log.e("warn",val);
             if (val.toString().equals("999999")) {
                 Toast.makeText(getActivity(), "获取泵站列表网络或者服务器异常", Toast.LENGTH_SHORT).show();
+                progressDialog.dismiss();
             } else {
                 listBengZhan = new ArrayList<BengZhanClass>();
                 String[] objects = val.split("\\|");
-                for (int i = 0; i < objects.length-10; i++) {
+                for (int i = 0; i < objects.length-11; i++) {
                     if (objects[i].length() > 0) {
                         String[] values = objects[i].split(",");
                         if (values.length > 1) {
@@ -282,6 +284,7 @@ public class BenzhangFragment extends Fragment{
         if (hidden){
             //fragment被隐藏
         }else{
+            list1.clear();
             init();//显示出来
         }
 

@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.VIBRATE"></uses-permission>
+
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/h"
@@ -22,21 +24,31 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".JiaOilJiLU"></activity>
+        <activity android:name=".AddOilHistoryWrite"></activity>
+        <activity android:name="com.zhuce.cn.ZhuCe"></activity>
         <activity android:name=".BeiDouPersonInformation"></activity>
         <activity android:name=".CarInformation"></activity>
-        <activity android:name=".MainActivity"></activity>
+        <activity android:name=".WorkWarnLog"></activity>
+       <activity android:name=".MainActivity"></activity>
+        <activity android:name=".TongJiFenXi"></activity>
         <activity android:name=".BaoJingListActivity"></activity>
         <activity android:name=".BaoJingChaXun"></activity>
         <activity android:name="com.dashuju.DaShuJuChaXun"></activity>
         <activity android:name=".BaoJingMeauActivity"></activity>
         <activity android:name=".JianKongList"></activity>
-        <activity android:name=".CameraPlayXXActivity"></activity>
+        <activity android:name=".CameraPlayXXActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+        </activity>
         <activity android:name=".LiShiChaXun"></activity>
         <activity android:name=".BengZhanXiangQingActivity"></activity>
         <activity android:name="com.dashuju.DaShuJUListActivity"></activity>
         <activity android:name="com.dashuju.Simple_BZ"></activity>
         <activity android:name="com.dashuju.simpleBZ"></activity>
         <activity android:name=".BeiDouSouSuo"></activity>
+        <activity android:name=".YouLiangBaoJingTongJi"></activity>
+        <activity android:name=".LiChengYouHaoTongJi"></activity>
+        <activity android:name=".lichengyouhao_onclick"></activity>
         <activity android:name=".YuLiangChaXunActivity"
                     android:configChanges="orientation|keyboardHidden|screenSize">
         </activity>
@@ -55,8 +67,16 @@
                 <action android:name="com.example.broadcastreceiver.action.CLICK"></action>
             </intent-filter>
         </receiver>-->
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.jph.takephoto.fileprovider"
+            android:grantUriPermissions="true"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
-        <receiver android:name=".MainActivity$MyReceiver"></receiver>
     </application>
 
 </manifest>

@@ -7,13 +7,27 @@ import java.io.Serializable;
  */
 
 public class BeiDouCarLieBiaoBeen implements Serializable{
+    public String getNUM() {
+        return NUM;
+    }
+    private String sortLetters;//�
+    public void setNUM(String NUM) {
+        this.NUM = NUM;
+    }
+
+    private String NUM="";
     private String CARNUM="";
     private String CARTYPE="";
     private String PERID="";
     private String NAME="";
     private String TELNUMBER="";
     private String CARIMG="";
-
+    public String getSortLetters() {
+        return sortLetters;
+    }
+    public void setSortLetters(String sortLetters) {
+        this.sortLetters = sortLetters;
+    }
     public String getONLINE() {
         return ONLINE;
     }

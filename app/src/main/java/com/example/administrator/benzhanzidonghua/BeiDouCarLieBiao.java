@@ -1,18 +1,25 @@
 package com.example.administrator.benzhanzidonghua;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.PopupWindow;
@@ -21,6 +28,8 @@ import android.widget.Toast;
 
 import com.com.vanpeng.Adapter.BDListViewAdapter;
 import com.com.vanpeng.Adapter.BD_POPListviewAdapter;
+import com.sousuo.CharacterParser;
+import com.sousuo.ClearEditText;
 import com.vanpeng.javabeen.BD_carPOPListView;
 import com.vanpeng.javabeen.BeiDouCarLieBiaoBeen;
 import com.vanpeng.javabeen.ListItemClickHelp;
@@ -38,75 +47,166 @@ import java.util.List;
  * 北斗定位车辆列表
  */
 
-public class BeiDouCarLieBiao extends AppCompatActivity implements ListItemClickHelp {
+public class BeiDouCarLieBiao extends AppCompatActivity implements ListItemClickHelp,AdapterView.OnItemClickListener {
     private List<BeiDouCarLieBiaoBeen> list=null;
     private MyProgressDialog progressDialog;
     private ListView BDListView;
     private StringBuffer sb;
     private  PopupWindow popupWindow;
-    private ImageButton BD_CarMeau;
-    private boolean isTrue=true;
-    private EditText BD_EditText;
+    private ClearEditText BD_EditText;
+    private Button tv_caidan;
+    private List<BeiDouCarLieBiaoBeen> list1=null;
+    private Bundle savedInstance;
+    /**
+     * 汉字转换成拼音的类
+     */
+    private CharacterParser characterParser;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.beidoucheliangliebiao_layout);
+        savedInstance=savedInstanceState;
         CommonMethod.setStatuColor(BeiDouCarLieBiao.this, R.color.blue);
         init();
     }
     private void init(){
+
         Button bt_BDButton = (Button)findViewById(R.id.bt_BDButton);//返回
         bt_BDButton.setOnClickListener(new BeiDouCarLieBiaoListener());
-        BD_CarMeau = (ImageButton)findViewById(R.id.BD_CarMeau);//菜单
-        BD_CarMeau.setOnClickListener(new BeiDouCarLieBiaoListener());
-        BD_EditText =(EditText)findViewById(R.id.BD_EditText);//搜索框
-        BD_EditText.setOnClickListener(new BeiDouCarLieBiaoListener());
+        tv_caidan = (Button) findViewById(R.id.tv_caidan);
+        //实例化汉字转拼音类
+        characterParser = CharacterParser.getInstance();
+        // BD_CarMeau = (ImageButton)findViewById(R.id.BD_CarMeau);//菜单
+       // Button BD_CarMeau = (Button) findViewById(R.id.BD_CarMeau);
+        //BD_CarMeau.setOnClickListener(new BeiDouCarLieBiaoListener());
+
+        tv_caidan.setOnClickListener(new BeiDouCarLieBiaoListener());
+        //搜索
+        BD_EditText =(ClearEditText)findViewById(R.id.BD_EditText);//搜索框
+        //监听 输入框内容变化
+        BD_EditText.addTextChangedListener(new BD_EditTextListener());
         ImageButton BD_CarSearch =(ImageButton)findViewById(R.id.BD_CarSearch);//搜索按钮
         BD_CarSearch.setOnClickListener(new BeiDouCarLieBiaoListener());
-       /* Button BD_serach =(Button)findViewById(R.id.BD_serach);
-        BD_serach.setOnClickListener(new BeiDouCarLieBiaoListener());*/
+       // Button BD_serach =(Button)findViewById(R.id.BD_serach);
+       // BD_serach.setOnClickListener(new BeiDouCarLieBiaoListener());
         BDListView = (ListView)findViewById(R.id.BDListView);
         progressDialog = new MyProgressDialog(BeiDouCarLieBiao.this, false, "加载中...");
         //BDListView.setOnItemClickListener(new BDListViewListener());
         list = new ArrayList<BeiDouCarLieBiaoBeen>();
+        list1 = new ArrayList<BeiDouCarLieBiaoBeen>();
         new Thread(networkTask).start();
     }
 //listview条目里不同按钮点击事件回调
     @Override
     public void onClick(View item, View widget, int position, int which) {
             switch (which){
-                case R.id.car_photo:  Intent guji_intent = new Intent();
+                case R.id.car_in:
+                                        Intent guji_intent = new Intent();
                                         guji_intent.setAction("com.neter.broadcast.receiver.SendDownXMLBroadCast");//发出自定义广播
                                         guji_intent.putExtra("CARNUM",list.get(position).getCARNUM().trim());
+                                        guji_intent.putExtra("ALLcarNum",getAllCarNum());
                                         sendBroadcast(guji_intent);
                                         finish();
-                                        break;
-                case R.id.car_in:  Intent intent = new Intent(BeiDouCarLieBiao.this,CarInformation.class);
-                                     intent.putExtra("carNum",list.get(position).getCARNUM());
-                                     startActivity(intent);
                                     break;
-                case R.id.centerID:Intent PER_intent = new Intent(BeiDouCarLieBiao.this,BeiDouPersonInformation.class);
+                case R.id.centerID:
+                                        Intent intent = new Intent(BeiDouCarLieBiao.this,CarInformation.class);
+                                        intent.putExtra("carNum",list.get(position).getCARNUM());
+                                        intent.putExtra("PERID",list.get(position).getPERID());
+                                        intent.putExtra("allCarNum",getAllCarNum());
+                                            if (getIntent().getStringExtra("personInformation") == null) {
+
+                                            } else {
+                                                intent.putExtra("personInformation", getIntent().getStringExtra("personInformation"));
+                                            }
+
+                                        startActivity(intent);
+                                    /* Intent PER_intent = new Intent(BeiDouCarLieBiao.this,BeiDouPersonInformation.class);
                                      PER_intent.putExtra("perID",list.get(position).getPERID());
-                                     startActivity(PER_intent);
+                                     startActivity(PER_intent);*/
                                     break;
             }
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        switch (position){
+            case 1:
+                    closePopwindow();
+                    Intent intent = new Intent(BeiDouCarLieBiao.this,YouLiangBaoJingTongJi.class);
+                    intent.putExtra("allCarNum",getAllCarNum());
+                    startActivity(intent);
+                    break;
+            case 2:
+                    closePopwindow();
+                    Intent Oil_intent = new Intent(BeiDouCarLieBiao.this,LiChengYouHaoTongJi.class);
+                    startActivity(Oil_intent);
+                    break;
+            /*case 3:
+                    closePopwindow();
+                    Intent Work_intent = new Intent(BeiDouCarLieBiao.this,WorkWarnLog.class);
+                    startActivity(Work_intent);
+                    break;*/
+            case 3:
+                     closePopwindow();
+                     Intent intent2 = new Intent(BeiDouCarLieBiao.this,JiaOilJiLU.class);
+
+                        if (getIntent().getStringExtra("personInformation") == null) {
+                        } else {
+                            intent2.putExtra("personInformation", getIntent().getStringExtra("personInformation"));
+                        }
+                        intent2.putExtra("ALLcarNum", getAllCarNum());
+
+                     startActivity(intent2);
+
+                    //判断权限
+                    /*String str [] = getIntent().getStringExtra("personInformation").split(",");
+                    if(str [6].equals("0")){
+                        Intent intent3 = new Intent(BeiDouCarLieBiao.this,AddOilHistoryWrite.class);
+                        intent3.putExtra("personInformation",getIntent().getStringExtra("personInformation"));
+                        intent3.putExtra("ALLcarNum",getAllCarNum());
+                        startActivity(intent3);
+                    }else{
+                        Intent intent2 = new Intent(BeiDouCarLieBiao.this,JiaOilJiLU.class);
+                        intent2.putExtra("personInformation",getIntent().getStringExtra("personInformation"));
+                        intent2.putExtra("ALLcarNum",getAllCarNum());
+                        startActivity(intent2);
+                    }*/
+                    break;
+            case 4: finish();break;
+        }
     }
 
     private class BeiDouCarLieBiaoListener implements View.OnClickListener{
         @Override
         public void onClick(View v) {
             switch (v.getId()){
-                case R.id.bt_BDButton:finish();break;
-                /*case R.id.BD_serach:  Intent intent = new Intent(BeiDouCarLieBiao.this,BeiDouSouSuo.class);
+                case R.id.bt_BDButton:
+                    setBroadcastReceiver();
+                    finish();
+                    break;
+
+               /* case R.id.BD_serach:  Intent intent = new Intent(BeiDouCarLieBiao.this,BeiDouSouSuo.class);
                                         startActivityForResult(intent,0);
                                         break;*/
-                case R.id.BD_CarMeau:BD_popWindow();break;
-                case R.id.BD_EditText:break;
-                case R.id.BD_CarSearch:selectCar(BD_EditText.getText().toString().trim());break;
+                /*case R.id.BD_CarMeau:
+                    Toast.makeText(BeiDouCarLieBiao.this,"1111",Toast.LENGTH_SHORT).show();
+                    BD_popWindow();
+                    break;*/
+                case R.id.tv_caidan:
+                    //Toast.makeText(BeiDouCarLieBiao.this,"1111",Toast.LENGTH_SHORT).show();
+                    BD_popWindow();
+                    break;
+                case R.id.BD_CarSearch:
+                    //selectCar(BD_EditText.getText().toString().trim());
+                    break;
+                case R.id.meau_x:
+                    closePopwindow();break;
             }
         }
     }
     private void BD_popWindow(){
+
         RelativeLayout top = (RelativeLayout) findViewById(R.id.rl_top);
         //RelativeLayout rllll = (RelativeLayout) findViewById(R.id.rllll);
         /*WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
@@ -141,38 +241,45 @@ public class BeiDouCarLieBiao extends AppCompatActivity implements ListItemClick
         });*/
         // 如果不设置PopupWindow的背景，无论是点击外部区域还是Back键都无法dismiss弹框
         // 我觉得这里是API的一个bug
-        popupWindow.setBackgroundDrawable(getResources().getDrawable(
-                R.color.white));
+        popupWindow.setBackgroundDrawable(getResources().getDrawable(R.color.white));
         //popupWindow.setBackgroundDrawable(new BitmapDrawable());
         // 设置好参数之后再show
-        popupWindow.showAsDropDown(top,0, 0);//在view(top)控件正下方，以view为参照点第二个参数为popwindow距离view的横向距离，
+       // popupWindow.showAsDropDown(top,0, 0);//在view(top)控件正下方，以view为参照点第二个参数为popwindow距离view的横向距离，
         //第三个参数为y轴即popwindow距离view的纵向距离
+        popupWindow.showAtLocation(top, Gravity.TOP,0,0);
     }
     private void closePopwindow() {
-        popupWindow.dismiss();
-        if(popupWindow!=null){ popupWindow = null;}
+
+        if(popupWindow!=null){
+            popupWindow.dismiss();
+            popupWindow = null;
+        }
     }
     private void addinit(View view){
-        List<BD_carPOPListView> list = new ArrayList<BD_carPOPListView>();
-        int [] iv = {R.mipmap.youliangbaobiao,R.mipmap.chaosu,R.mipmap.youhao,R.mipmap.licheng,R.mipmap.tuichubeidou};
-        String [] tv={"油量报警统计","超速报警统计","平均油耗统计","里程统计","退出北斗"};
-        for (int i=0;i<5;i++){
+        List<BD_carPOPListView> list = new ArrayList<>();
+        int [] iv = {R.mipmap.youliangbaobiao,R.mipmap.licheng,R.mipmap.jiayoujilu,R.mipmap.tuichubeidou};
+        String [] tv={"油量报警统计","里程油耗统计","加油记录","退出北斗"};
+        for (int i=0;i<iv.length;i++){
             BD_carPOPListView bd =new BD_carPOPListView();
             bd.setImageview(iv[i]);
             bd.setText(tv[i]);
             list.add(bd);
         }
         ListView listview=(ListView)view.findViewById(R.id.BD_carListView);
+        View headerView = LayoutInflater.from(this).inflate(R.layout.listviewhead,null);
+        Button meau_x = (Button)headerView.findViewById(R.id.meau_x);
+        meau_x.setOnClickListener(new BeiDouCarLieBiaoListener());
         listview.setAdapter(new BD_POPListviewAdapter(BeiDouCarLieBiao.this,list));
-        listview.setOnItemClickListener(null);
+        listview.addHeaderView(headerView);
+        listview.setOnItemClickListener(this);
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         String value = data.getStringExtra("value");
         switch (resultCode){
-            case 1:selectCar(value);
-                break;
+            /*case 1:selectCar(value);
+                break;*/
             case 2:break;
             case 3:break;
             default:
@@ -203,11 +310,11 @@ public class BeiDouCarLieBiao extends AppCompatActivity implements ListItemClick
                 // 命名空间
                 String nameSpace = "http://tempuri.org/";
                 // 调用的方法名称
-                String methodName = "Get_Car_List";
+                String methodName = "Get_CarNoPic_List";
                 // EndPoint
-                String endPoint = "http://beidoujieshou.sytxmap.com:5963/GPSService.asmx";
+                String endPoint =Path.get_ZanShibeidouPath();
                 // SOAP Action
-                String soapAction = "http://tempuri.org/Get_Car_List";
+                String soapAction = "http://tempuri.org/Get_CarNoPic_List";
                 // 指定WebService的命名空间和调用的方法名
                 SoapObject rpc = new SoapObject(nameSpace, methodName);
                 //设置需调用WebService接口需要传入的参数CarNum
@@ -238,7 +345,13 @@ public class BeiDouCarLieBiao extends AppCompatActivity implements ListItemClick
                 // 得到服务器传回的数据 返回的数据时集合 每一个count是一个及集合的对象
                 int count1 = object.getPropertyCount();
                 Log.e("warn",String.valueOf(count1));
-
+                if(count1==0){
+                    progressDialog.dismiss();
+                    Message msg = Message.obtain();
+                    msg.what=2;
+                    hanlder.sendMessage(msg);
+                    return;
+                }
                 if(count1>0)
                 {
                     sb = new StringBuffer();
@@ -246,6 +359,9 @@ public class BeiDouCarLieBiao extends AppCompatActivity implements ListItemClick
                         Log.e("warn","-----------------------------");
                         BeiDouCarLieBiaoBeen lieBiao = new BeiDouCarLieBiaoBeen();
                         SoapObject soapProvince = (SoapObject)object.getProperty(i);
+
+                        Log.e("warn",soapProvince.getProperty("NUM").toString()+":");
+                        sb.append(soapProvince.getProperty("NUM").toString()+",");
 
                         Log.e("warn",soapProvince.getProperty("CARNUM").toString()+":");
                         sb.append(soapProvince.getProperty("CARNUM").toString()+",");
@@ -279,9 +395,6 @@ public class BeiDouCarLieBiao extends AppCompatActivity implements ListItemClick
                                 sb.append("不在线"+"|");
                             }
                         }
-                        Log.e("warn",soapProvince.getProperty(" CARIMG").toString()+":");
-                        sb.append(soapProvince.getProperty(" CARIMG").toString()+",");
-
                        /* Log.e("warn",soapProvince.getProperty("CARIMG").toString()+":");
                         sb.append(soapProvince.getProperty("CARIMG").toString()+",");
                         //lieBiao.setN_WD(soapProvince.getProperty("N_WD").toString());*/
@@ -296,6 +409,7 @@ public class BeiDouCarLieBiao extends AppCompatActivity implements ListItemClick
                 hanlder.sendMessage(msg);
             }
         }
+
     };
     //旧
    /* Runnable networkTask = new Runnable() {
@@ -441,31 +555,40 @@ public class BeiDouCarLieBiao extends AppCompatActivity implements ListItemClick
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
+            String [] auto_arr;
             int i = msg.what;
-            if(i==0){
+            if(i==2){
                 progressDialog.dismiss();
-                Toast.makeText(getApplicationContext(),"网络或服务器异常",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"无车辆信息",Toast.LENGTH_SHORT).show();
             }else if(i==1){
                 progressDialog.dismiss();
                 Log.e("warn",sb.toString());
                 String arr [] = sb.toString().split("\\|");
+                auto_arr = new String [arr.length];
                 for(int j=0;j<arr.length;j++){
                     BeiDouCarLieBiaoBeen lieBiao = new BeiDouCarLieBiaoBeen();
                     String arr1 []=arr[j].split(",");
-                    lieBiao.setCARNUM(arr1[0]);
-                    lieBiao.setCARTYPE(arr1[1]);
-                    lieBiao.setPERID(arr1[2]);
-                    if(arr1[3].equals("anyType{}")){
-                        lieBiao.setNAME("未知");
-                    }else{
-                        lieBiao.setNAME(arr1[3]);
-                    }
+                    lieBiao.setNUM(arr1[0]);
+
+
+                    lieBiao.setCARNUM(arr1[1]);
+                    filledData(lieBiao);
+
+
+                    lieBiao.setCARTYPE(arr1[2]);
+                    lieBiao.setPERID(arr1[3]);
+                    auto_arr[j]=arr1[1];
                     if(arr1[4].equals("anyType{}")){
-                        lieBiao.setTELNUMBER("未知");
+                        lieBiao.setNAME("");
                     }else{
-                        lieBiao.setTELNUMBER(arr1[4]);
+                        lieBiao.setNAME(arr1[4]);
                     }
-                    lieBiao.setONLINE(arr1[5]);
+                    if(arr1[5].equals("anyType{}")){
+                        lieBiao.setTELNUMBER("");
+                    }else{
+                        lieBiao.setTELNUMBER(arr1[5]);
+                    }
+                    lieBiao.setONLINE(arr1[6]);
                     /*lieBiao.setD_NUM(arr1[0]);
                     lieBiao.setD_OFFNUM(arr1[1]);
                     lieBiao.setD_ONLINE(arr1[2]);
@@ -485,15 +608,28 @@ public class BeiDouCarLieBiao extends AppCompatActivity implements ListItemClick
                     lieBiao.setD_HEIGHT(arr1[16]);*/
 
                     list.add(lieBiao);
+                    //list1.add(lieBiao);
                 }
+
                 bdl=new BDListViewAdapter(BeiDouCarLieBiao.this,list,BeiDouCarLieBiao.this);
                 BDListView.setAdapter(bdl);
+
+
             }else{
                 progressDialog.dismiss();
-                Toast.makeText(getApplicationContext(),"获取数据失败",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"网络或服务器异常",Toast.LENGTH_SHORT).show();
             }
         }
     };
+
+
+
+
+
+
+
+
+
     private void selectCar(String value){
         int i =0;
         int j=0;
@@ -512,5 +648,108 @@ public class BeiDouCarLieBiao extends AppCompatActivity implements ListItemClick
             list.add(lieBiao);
             bdl.notifyDataSetChanged();//刷新listview列表
         }
+    }
+    private Handler imageHandle = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+        }
+    };
+    private String getAllCarNum(){
+        String str="";
+        for(int i=0;i<list.size();i++){
+            if(i==0){
+                str = str +list.get(i).getCARNUM().toString();
+            }else {
+                str = str +","+list.get(i).getCARNUM().toString();
+            }
+        }
+        return str;
+    }
+    private void setBroadcastReceiver(){
+        Intent fanhui_intent = new Intent();
+        fanhui_intent.setAction("com.neter.broadcast.receiver.fanhuizhuye");//发出自定义广播
+        sendBroadcast(fanhui_intent);
+    }
+    //搜索
+    private void filledData( BeiDouCarLieBiaoBeen sortModel){
+        //汉字转换成拼音
+        String pinyin = characterParser.getSelling(sortModel.getCARNUM());
+
+        String sortString = pinyin.substring(0, 1).toUpperCase();
+
+        // 正则表达式，判断首字母是否是英文字母
+        if(sortString.matches("[A-Z]")){
+            sortModel.setSortLetters(sortString.toUpperCase());
+        }else{
+            sortModel.setSortLetters("#");
+        }
+
+    }
+    //监听输入框内容变化
+    class BD_EditTextListener implements TextWatcher {
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            //s 是变化的内容 start输入内容数量 before删除内容数量 count
+                Log.e("warn",s.toString());
+                filterData(s.toString());
+        }
+        @Override
+        public void afterTextChanged(Editable s) {
+           /* Log.e("warn",s.toString()+"改变后");
+            if(s.toString().equals("")){
+                if(list.size()>1){//代表没选择 list没清空过
+                }else{//被清空过 只有一条内容
+                    list.clear();
+                    for(BeiDouCarLieBiaoBeen l:list1){
+                        list.add(l);
+                    }
+                    if(bdl!=null){
+                        bdl.notifyDataSetChanged();
+                    }
+
+                }
+            }*/
+        }
+    }
+
+    /**
+     * 根据输入框中的值来过滤数据并更新ListView
+     * @param filterStr
+     */
+    private void filterData(String filterStr){
+        List<BeiDouCarLieBiaoBeen> filterDateList = new ArrayList<BeiDouCarLieBiaoBeen>();
+
+        if(TextUtils.isEmpty(filterStr)){
+            filterDateList =list;
+        }else{
+            filterDateList.clear();
+            for(BeiDouCarLieBiaoBeen sortModel : list){
+                String name = sortModel.getCARNUM();  //输入的内容转为大写
+                if(name.indexOf(filterStr.toString().toUpperCase()) != -1 || characterParser.getSelling(name).startsWith(filterStr.toString())){
+                    filterDateList.add(sortModel);
+                }
+            }
+        }
+
+        // // 根据a-z进行排序��
+        //Collections.sort(filterDateList, pinyinComparator);
+        bdl.updateListView(filterDateList);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            setBroadcastReceiver();
+            finish();
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }

@@ -1,5 +1,7 @@
 package com.example.administrator.benzhanzidonghua;
 
+import android.Manifest;
+import android.app.Dialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -9,26 +11,35 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,14 +54,15 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.vanpeng.javabeen.BeiDouCarLieBiaoBeen;
 
 import java.util.Calendar;
-import static com.example.administrator.benzhanzidonghua.ShouYeAiCgisFragment.OnMapClikListener;
 
 import static com.example.administrator.benzhanzidonghua.R.id.JiShuiDian;
+import static com.example.administrator.benzhanzidonghua.R.id.add;
+import static com.example.administrator.benzhanzidonghua.R.id.wrap_content;
+import static com.example.administrator.benzhanzidonghua.ShouYeAiCgisFragment.OnMapClikListener;
 /**
  * 首页 地图
  */
 public class MainActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener,TimePickerDialog.OnTimeSetListener,OnMyClikListener,OnMapClikListener{
-    private TextView title_change;//标题
     private Button Meau;//标题栏上的菜单
     private LinearLayout replace;//被fragment替换的布局
     private ImageView All;//返回全景图
@@ -71,12 +83,13 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     private Fragment JianKongFragment;
     private MyProgressDialog progressDialog;
     private String value = "";//泵站列表详情
-    private PopupWindow popupWindow;
+    //private PopupWindow popupWindow;
     private View addview;//popwindow布局
     private Button BD_GJsearch;
     private ImageView BD_IV_GJsearch;
     private String CARNUM;
     private Bundle savedState;
+    private String Str2;//登录传过来的信息
     //private LinearLayout ZhuYeLL;
     private ImageView ZhuYeIV;
     private TextView ZhuYeText;
@@ -84,6 +97,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     private Button Main_back;
     private ImageView Main_Iv;
     private boolean ss=false;
+    private TextView title_change;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -91,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     private GoogleApiClient client;
     //定义点击查询时fragment的回调接口 view1向view2传数据时，在view1中定义
     OnMyclikListener myListener;
+    private boolean isMap=false;
    //自定义日期选择获得的年月日
     @Override
     public void onDateSet(DatePickerDialog datePickerDialog, int year, int month, int day) {
@@ -102,8 +117,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         if(dayString.length()==1){
             dayString = "0"+dayString;
         }
-        Toast.makeText(MainActivity.this, "new date:" + year + "-" + monthString + "-" + dayString, Toast.LENGTH_LONG).show();
-        BD_dateTime.setText(year + "-" + monthString + "-" + dayString);
+        //Toast.makeText(MainActivity.this, "new date:" + year + "-" + monthString + "-" + dayString, Toast.LENGTH_LONG).show();
+        BD_Box.setText(year + "-" + monthString + "-" + dayString);
     }
     //自定义时间选择获得的小时
     @Override
@@ -116,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         if(hourOfDayString.length()==1){
             hourOfDayString = "0"+hourOfDayString;
         }
-        Toast.makeText(MainActivity.this, "new time:" + hourOfDayString+ "-" + minuteString, Toast.LENGTH_LONG).show();
+        //Toast.makeText(MainActivity.this, "new time:" + hourOfDayString+ "-" + minuteString, Toast.LENGTH_LONG).show();
             if(startOrend){//点击了开始时间按钮
                 Start_timeHour.setText(hourOfDayString+ ":" + minuteString);
             }else{
@@ -130,6 +145,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 case 0://泵站列表
                         BengZhanLayoutMethod();
                         showView();
+                    Log.e("warn","maintivity泵站");
                         break;
                 case 1: //报警
                         Intent bjIntetn = new Intent(MainActivity.this, BaoJingChaXun.class);
@@ -140,8 +156,15 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                         showView();
                         break;
                 case 3://地图
+                        //isMap=true;
                         ShouYeLayoutMethod();
+                        if(AiCgisFragment.isAdded()) {
+                            myListener.callBack("", "", "");//清除覆盖物
+                        }
                         showView();
+                        meau_IV.setImageDrawable(getResources().getDrawable(R.mipmap.meau));
+                        ss=false;
+                    Log.e("warn","maintivity地图");
                         break;
                 case 4://历史
                         Intent LSIntetn = new Intent(MainActivity.this, LiShiChaXun.class);
@@ -150,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                         break;
                 case 5://北斗定位
                         Intent intent = new Intent(MainActivity.this,BeiDouCarLieBiao.class);
+                        intent.putExtra("personInformation",getIntent().getStringExtra("personInformation"));
                         startActivity(intent);
                         break;
                 case 6://水位监测
@@ -164,20 +188,22 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                         Intent JSD_intent = new Intent(MainActivity.this, LiShiChaXun.class);
                         JSD_intent.putExtra("bool", "0");//0用于区分是雨量查询还是水位和气体查询
                         startActivity(JSD_intent);
-                        showView();
-                        break;
-                case 9: finish();
                         break;
             }
     }
     //清空轨迹回调
     @Override
     public void onclik(String isSelect) {
-        ss=false;
-        Main_back.setEnabled(true);
-        Main_Iv.setImageDrawable(getResources().getDrawable(R.mipmap.fanhui));
-        Main_Iv.setVisibility(View.VISIBLE);
+
     }
+        //北斗进入北斗轨迹的 广播回调
+    /*@Override
+    public void setText(String content,String str) {
+
+        Log.e("warn",content+":"+str);
+
+
+    }*/
 
     //定义点击查询时fragment的回调接口 view1向view2传数据时，在view1中定义
     interface OnMyclikListener {
@@ -188,16 +214,18 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     public void setOnclikListener(OnMyclikListener onMyListener) {
         this.myListener = onMyListener;
     }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         savedState = savedInstanceState;
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_main);
+        //chechVersion();
         CommonMethod.setStatuColor(MainActivity.this, R.color.blue);
         //setWindowStatusBarColor(this,R.color.blue);
+        //setScreenMode(Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL); // 手动调节屏幕亮度
         ZhuCeReceiver();
+        BD_GJReceiver();
         init();
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -208,10 +236,12 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         Main_back.setEnabled(true);
         Main_Iv.setVisibility(View.VISIBLE);
     }
+    private ImageView meau_IV;
     //控件
     private void init() {
-        //title_change=(TextView)findViewById(R.id.title_change);
-        //title_change.setText("首页");
+        Str2 = getIntent().getStringExtra("personInformation");
+        title_change=(TextView)findViewById(R.id.title_change);
+        meau_IV = (ImageView)findViewById(R.id.Meau);
         Meau = (Button) findViewById(R.id.bt_rightMeau);
         Meau.setOnClickListener(new MainActivityListener());
         /*ShouYe = (ImageView) findViewById(R.id.ShouYe);
@@ -257,6 +287,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         mZhuYeFragment  = new ZhuYeFragment();
         ZhuYeLayoutMethod();//进入应用默认的页面主页
         //switchFragment(ShuiWeiFragment,YuLiangFragment,BenzhangFragment,JianKongFragment,ShouYeAiCgisFragment);
+        chechVersion();
     }
 
     /**
@@ -295,7 +326,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         client.disconnect();
     }
 
-
+    private boolean isGJorCancel=false;  //false代表轨迹true代表取消
     //控件的点击事件
     private class MainActivityListener implements View.OnClickListener {
 
@@ -307,7 +338,19 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         public void onClick(View view) {
             switch (view.getId()) {
                 case R.id.bt_rightMeau:
-                    MeauPopWindows();//标题菜单展开的popwindow
+                    if(ss){//ss 在北斗地图中   变成轨迹按钮
+                        isGJorCancel=!isGJorCancel;
+                        if(isGJorCancel==true){
+                            Meau.setText("取消");
+                            BD_TimepopWindow();
+                        }
+                        if(isGJorCancel==false){
+                            Meau.setText("轨迹");
+                            popupwindow.dismiss();
+                        }
+                    }else{//变成菜单按钮
+                        MeauPopWindows();//标题菜单展开的popwindow
+                    }
                     break;
                 /*case R.id.ShouYeLayout:
                     ShouYeLayoutMethod();
@@ -344,12 +387,14 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                     closePopwindow();//点击popwindow条目时popwindow窗体消失
                     //popupWindow.dismiss();
                     BengZhanLayoutMethod();
+                    showView();
                     break;
                 case R.id.ShiPin:
                     POP_ShiPin();
                     closePopwindow();//点击popwindow条目时popwindow窗体消失
                     //popupWindow.dismiss();
                     JianKongLayoutMethod();
+                    showView();
                     break;
                 case R.id.ShuiWeiJianCe:
                     POP_ShuiWei();
@@ -357,12 +402,14 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                     //popupWindow.dismiss();
                     //popupWindow.dismiss();
                     ShuiWeiLayoutMethod();
+                    showView();
                     break;
                 case R.id.YuLiangJianCe:
                     POP_YuLiang();
                     closePopwindow();//点击popwindow条目时popwindow窗体消失
                     //popupWindow.dismiss();
                     YuLiangLayoutMethod();
+                    showView();
 
                     break;
                 case JiShuiDian://雨量历史记录查询
@@ -370,7 +417,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                     Intent JSD_intent = new Intent(MainActivity.this, LiShiChaXun.class);
                     JSD_intent.putExtra("bool", "0");//0用于区分是雨量查询还是水位和气体查询
-                    startActivity(JSD_intent);
+                    startActivityForResult(JSD_intent,2);
                     closePopwindow();
                     //popupWindow.dismiss();
                     break;
@@ -380,14 +427,14 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                     //popupWindow.dismiss();
                     Intent LSIntetn = new Intent(MainActivity.this, LiShiChaXun.class);
                     LSIntetn.putExtra("bool", "1");
-                    startActivity(LSIntetn);
+                    startActivityForResult(LSIntetn,2);
                     break;
                 case R.id.BaoJing://跳转到报警activity
                     POP_BaoJing();
                     closePopwindow();//点击popwindow条目时popwindow窗体消失
                     //popupWindow.dismiss();
                     Intent bjIntetn = new Intent(MainActivity.this, BaoJingChaXun.class);
-                    startActivity(bjIntetn);
+                    startActivityForResult(bjIntetn,1);
                     break;
                 /*case R.id.DaShuJu: //跳转到大数据activity
                                     POP_DaShuJu();
@@ -406,6 +453,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                     finish();
                     break;//退出当前应用
                 case R.id.BeiDou: Intent intent = new Intent(MainActivity.this,BeiDouCarLieBiao.class);
+                                    intent.putExtra("personInformation",getIntent().getStringExtra("personInformation"));
                                     startActivity(intent);
                                     closePopwindow();
                                     //popupWindow.dismiss();
@@ -419,22 +467,39 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 case R.id.End_TimeHour:selectEndHour();break;*/
                 case R.id.bd_chaxun:  //查看行车轨迹查看按钮 以下是提交参数 自定义回调方法
                                         //CARNUM
-
-                             date = BD_dateTime.getText().toString();
+                             date = BD_Box.getText().toString();
                              start_hour = date +" "+Start_timeHour.getText().toString()+":"+"00";
                              end_hour = date +" "+End_TimeHour.getText().toString()+":"+"00";
                                         //BD_sendDate();
                             //传入地图fragment的回调
-                             myListener.callBack(CARNUM,start_hour,end_hour);
+                             if(BD_GJcarPaiHao.getText().toString().equals(CARNUM)) {
+                                 myListener.callBack(CARNUM, start_hour, end_hour);
+                             }else{
+                                 Log.e("warn","不一样");
+                                 myListener.callBack(BD_GJcarPaiHao.getText().toString()+",", start_hour, end_hour);
+                             }
+                            isGJorCancel=!isGJorCancel;
+                            Meau.setText("轨迹");
+                             popupwindow.dismiss();
                                         break;
                 /*case R.id.ZhuYeLL:
                                     break;*/
                 case R.id.Main_back:
-                                if(ss==false) {
-                                            ZhuYeLayoutMethod();//进入应用主页
-                                }else {
-                                    BD_TimepopWindow();
-                                }
+
+                                            ss=false;
+                                            if(isMap==true){//用于判断是否从北斗地图页面返回北斗车辆主页
+                                                title_change.setText("沈阳经济技术开发区智慧城管");
+                                                myListener.callBack("","","");   //清除覆盖物图层或者停止计时器
+                                                isMap=false;
+                                                meau_IV.setImageDrawable(getResources().getDrawable(R.mipmap.meau));
+                                                Meau.setText("");
+                                                Intent bd_intent  = new Intent(MainActivity.this,BeiDouCarLieBiao.class);
+                                                bd_intent.putExtra("personInformation",getIntent().getStringExtra("personInformation"));
+                                                startActivity(bd_intent);
+                                            }else {
+                                                ZhuYeLayoutMethod();//进入应用主页
+                                            }
+
                                       break;
             }
         }
@@ -450,6 +515,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     private Button BD_dateTime;
     private Button Start_timeHour;
     private Button End_TimeHour;
+    private  PopupWindow popupwindow;
+    private  TextView BD_Box ;//日期
+    private  TextView BD_GJcarPaiHao;
     //搜索北斗轨迹选择条件的popwindow 和 自定义选择时间控件 查看行车轨迹
     public static final String DATEPICKER_TAG = "datepicker";
     public static final String TIMEPICKER_TAG = "Starttimepicker";
@@ -458,18 +526,25 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     private void BD_TimepopWindow(){
         RelativeLayout top = (RelativeLayout) findViewById(R.id.topMain);
         View addview = LayoutInflater.from(this).inflate(R.layout.bd_gitime_layout, null);
+        BD_Box = (TextView)addview.findViewById(R.id.BD_Box);
         ImageButton bd_chaxun = (ImageButton)addview.findViewById(R.id.bd_chaxun);
         bd_chaxun.setOnClickListener(new MainActivityListener());
-        BD_dateTime = (Button)addview .findViewById(R.id.BD_dateTime);//选择日期
         Start_timeHour =(Button)addview .findViewById(R.id.Start_timeHour) ;
         End_TimeHour = (Button)addview .findViewById(R.id.End_TimeHour);
-        EditText BD_GJcarPaiHao = (EditText)addview.findViewById(R.id.BD_GJcarPaiHao);
+        BD_GJcarPaiHao = (TextView)addview.findViewById(R.id.BD_GJcarPaiHao);
         BD_GJcarPaiHao.setText(CARNUM);
+        BD_GJcarPaiHao.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                CarPai();
+            }
+        });
         //BD_addinit(addview);
-        PopupWindow popupWindow = new PopupWindow(addview,ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);//2,3参数为宽高
-        popupWindow.setTouchable(true);//popupWindow可触摸
-        popupWindow.setOutsideTouchable(true);//点击popupWindow以外区域消失
-        popupWindow.setTouchInterceptor(new View.OnTouchListener() {
+        popupwindow = new PopupWindow(addview,ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);//2,3参数为宽高
+        popupwindow.setTouchable(true);//popupWindow可触摸
+        popupwindow.setOutsideTouchable(true);//点击popupWindow以外区域消失
+        popupwindow.setFocusable(true);
+        popupwindow.setTouchInterceptor(new View.OnTouchListener() {
 
             @Override
             public boolean onTouch(View arg0, MotionEvent arg1) {
@@ -478,17 +553,60 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 return false;
             }
         });
-        popupWindow.setBackgroundDrawable(getResources().getDrawable(
-                R.color.white));
+        //设置popwindow消失的监听事件
+        popupwindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                isGJorCancel=!isGJorCancel;
+                Meau.setText("轨迹");
+            }
+        });
+        popupwindow.setBackgroundDrawable(getResources().getDrawable(R.color.white));
         //popupWindow.setBackgroundDrawable(new BitmapDrawable());
         // 设置好参数之后再show
-        popupWindow.showAsDropDown(top,0,0);//在view(top)控件正下方，以view为参照点第二个参数为popwindow距离view的横向距离，
+        popupwindow.showAsDropDown(top,0,0);//在view(top)控件正下方，以view为参照点第二个参数为popwindow距离view的横向距离，
         //第三个参数为y轴即popwindow距离view的纵向距离
 
 
 
         //自定义 选择日期和时间的选择器
         final Calendar calendar = Calendar.getInstance();
+
+        //初始化各个控件的时间
+        String year  = String.valueOf(calendar.get(Calendar.YEAR));
+        String month  = String.valueOf(calendar.get(Calendar.MONTH)+1);
+        String day  = String.valueOf(calendar.get(Calendar.DAY_OF_MONTH));
+        String hour = "";
+        hour = String.valueOf(calendar.get(Calendar.HOUR_OF_DAY) - 1);
+        if(hour.equals("-1")){
+            hour = "23";
+        }
+
+        String newHour = String.valueOf(calendar.get(Calendar.HOUR_OF_DAY));
+        if(month.length()<2){
+            month = "0"+month;
+        }
+        if(day.length()<2){
+            day = "0"+day;
+        }
+        if(hour.length()<2){
+            if(newHour.equals("0")|newHour.equals("00")){
+                hour="23:00";
+            }
+            hour="0"+hour+":00";
+        }else if(hour.length()==2){
+            hour=hour+":00";
+        }
+        if(newHour.length()<2){
+            newHour="0"+newHour+":00";
+        }else if(newHour.length()==2){
+            newHour=newHour+":00";
+        }
+        BD_Box.setText(year+"-"+month+"-"+day);
+        Start_timeHour.setText(hour);
+        End_TimeHour.setText(newHour);
+
+
         //初始化日期时间
         final DatePickerDialog datePickerDialog = DatePickerDialog.newInstance(this,
                 calendar.get(Calendar.YEAR),
@@ -506,7 +624,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 0,
                 false, true);//最后两个参数，是否是24小时制，是否抖动。推荐false，false
         //日期
-        BD_dateTime.setOnClickListener(new View.OnClickListener() {
+        BD_Box.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -723,11 +841,71 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         builder1.show();
     }*/
     //标题上的菜单popwindow
+  private Dialog popupWindow ;
     private void MeauPopWindows() {
+        //获取顶部标题栏的高度
+        RelativeLayout top = (RelativeLayout) findViewById(R.id.topMain);
+        WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        int width = wm.getDefaultDisplay().getWidth();
+        int height = wm.getDefaultDisplay().getHeight();
 
+        popupWindow  = new Dialog(this);
+        popupWindow .requestWindowFeature(Window.FEATURE_NO_TITLE);//去掉标题栏
+        // setContentView可以设置为一个View也可以简单地指定资源ID
+        // LayoutInflater
+        // li=(LayoutInflater)getSystemService(LAYOUT_INFLATER_SERVICE);
+        // View v=li.inflate(R.layout.dialog_layout, null);
+        // dialog.setContentView(v);
+        addview = LayoutInflater.from(this).inflate(R.layout.mainactivity_pop_window, null);
+       LinearLayout meau_LL = (LinearLayout)addview.findViewById(R.id.meau_LL);
+        //设置总布局大小
+        LinearLayout.LayoutParams  linearParams =(LinearLayout.LayoutParams) meau_LL.getLayoutParams();
+        linearParams.height= height-400;
+        meau_LL.setLayoutParams(linearParams);
+
+
+        popupWindow .setContentView(addview);
+        addinit(addview);
+
+       /* //获取状态栏的高度
+        int statusBarHeight1 = -1;
+        //获取status_bar_height资源的ID
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            //根据资源ID获取响应的尺寸值
+            statusBarHeight1 = getResources().getDimensionPixelSize(resourceId);
+        }
+        Log.e("WangJ", "状态栏-方法1:" + statusBarHeight1);*/
+
+
+
+
+        /*
+         * 获取圣诞框的窗口对象及参数对象以修改对话框的布局设置,
+         * 可以直接调用getWindow(),表示获得这个Activity的Window
+         * 对象,这样这可以以同样的方式改变这个Activity的属性.
+         */
+        Window dialogWindow = popupWindow .getWindow();
+        WindowManager.LayoutParams lp = dialogWindow.getAttributes();
+        dialogWindow.setGravity(Gravity.RIGHT | Gravity.CENTER);
+        //dialog位置
+        lp.x = -1000; // 新位置X坐标
+        lp.y =-((height- (height-300))/2-top.getHeight()); // 新位置Y坐标
+        //dialog大小
+        lp.width = width/2+100; // 宽度
+        //lp.height = height/2+200; // 高度
+        lp.height = height-300;
+
+        dialogWindow.setAttributes(lp);
+        popupWindow .show();
+
+
+
+       /* setScreenBrightness(100);
+        saveScreenBrightness(100);*/
         //closePopwindow();//当popupWindow！=null再点击消失时屏幕恢复亮度
         //LinearLayout ll = (LinearLayout)findViewById(R.id.replace);
-        RelativeLayout top = (RelativeLayout) findViewById(R.id.topMain);
+       /* RelativeLayout top = (RelativeLayout) findViewById(R.id.topMain);
         //RelativeLayout rllll = (RelativeLayout) findViewById(R.id.rllll);
         WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         int width = wm.getDefaultDisplay().getWidth();
@@ -736,13 +914,17 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         addview = LayoutInflater.from(this).inflate(R.layout.mainactivity_pop_window, null);
         addinit(addview);
         popupWindow = new PopupWindow(addview,ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);//2,3参数为宽高
+
+
+
+
         //改变屏幕透明度
-       /* WindowManager.LayoutParams params = this.getWindow().getAttributes();
+       *//* WindowManager.LayoutParams params = this.getWindow().getAttributes();
         params.alpha = 0.9f;
-        getWindow().setAttributes(params);*/
+        getWindow().setAttributes(params);*//*
         //ll.getBackground().setAlpha(50);
 
-        popupWindow.setHeight(height - top.getHeight()- 55);
+        popupWindow.setHeight(height/2);
         popupWindow.setWidth(width / 2);
         popupWindow.setTouchable(true);//popupWindow可触摸
         popupWindow.setOutsideTouchable(true);//点击popupWindow以外区域消失
@@ -755,13 +937,14 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 return false;
             }
         });
-       /* //监听popwindow消失的事件
-        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+       //监听popwindow消失的事件
+       popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
             @Override
             public void onDismiss() {
-                closePopwindow();
+               *//* setScreenBrightness(255);
+                saveScreenBrightness(255);*//*
             }
-        });*/
+        });
         // 如果不设置PopupWindow的背景，无论是点击外部区域还是Back键都无法dismiss弹框
         // 我觉得这里是API的一个bug
         popupWindow.setBackgroundDrawable(getResources().getDrawable(
@@ -769,7 +952,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         //popupWindow.setBackgroundDrawable(new BitmapDrawable());
         // 设置好参数之后再show
         popupWindow.showAsDropDown(top, width, 0);//在view(top)控件正下方，以view为参照点第二个参数为popwindow距离view的横向距离，
-        //第三个参数为y轴即popwindow距离view的纵向距离
+        //第三个参数为y轴即popwindow距离view的纵向距离*/
 }
   /*  private AlertDialog dialog=null;
   //标题上的菜单popwindow
@@ -861,6 +1044,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     //地图菜单的点击事件
     private void ShouYeLayoutMethod() {
+        title_change.setText("地图");
         /*BD_IV_GJsearch.setVisibility(View.VISIBLE);
         BD_GJsearch.setEnabled(true);//可点击*/
         /*ShouYe.setImageDrawable(getResources().getDrawable(R.mipmap.shouyeclick));
@@ -874,7 +1058,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         JianKong.setImageDrawable(getResources().getDrawable(R.mipmap.jiankong));
         JianKongText.setTextColor(getResources().getColor(R.color.huise));*/
         //title_change.setText("首页");
-        switchFragment(mZhuYeFragment,ShuiWeiFragment, YuLiangFragment, BenzhangFragment, JianKongFragment, AiCgisFragment,"AiCgisFragment");
+        switchFragment(mZhuYeFragment,ShuiWeiFragment, YuLiangFragment, BenzhangFragment, JianKongFragment, AiCgisFragment,"AiCgisFragment",null);
     }
    /* //首页菜单的点击事件
     private void ZhuYeLayoutMethod() {
@@ -896,11 +1080,14 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
    //首页菜单的点击事件
    private void ZhuYeLayoutMethod() {
        //title_change.setText("首页");
-       switchFragment(ShuiWeiFragment, YuLiangFragment, BenzhangFragment, JianKongFragment, AiCgisFragment,mZhuYeFragment,"AiCgisFragment");
+       title_change.setText("沈阳经济技术开发区智慧城管");
+       Bundle bundle = new Bundle();
+       bundle.putString("personInformation",Str2);
+       switchFragment(ShuiWeiFragment, YuLiangFragment, BenzhangFragment, JianKongFragment, AiCgisFragment,mZhuYeFragment,"AiCgisFragment",bundle);
    }
     //泵站点击事件
     private void BengZhanLayoutMethod() {
-        //title_change.setText("泵站列表");
+        title_change.setText("泵站");
         /*ShouYe.setImageDrawable(getResources().getDrawable(R.mipmap.firstpage));
         ShouYeText.setTextColor(getResources().getColor(R.color.huise));
         BenZhan.setImageDrawable(getResources().getDrawable(R.mipmap.benzhanclick));
@@ -911,12 +1098,12 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         YuLiangText.setTextColor(getResources().getColor(R.color.huise));
         JianKong.setImageDrawable(getResources().getDrawable(R.mipmap.jiankong));
         JianKongText.setTextColor(getResources().getColor(R.color.huise));*/
-        switchFragment(mZhuYeFragment,ShuiWeiFragment, YuLiangFragment, AiCgisFragment, JianKongFragment, BenzhangFragment,"BenzhangFragment");
+        switchFragment(mZhuYeFragment,ShuiWeiFragment, YuLiangFragment, AiCgisFragment, JianKongFragment, BenzhangFragment,"BenzhangFragment",null);
     }
 
     //水位点击事件
     private void ShuiWeiLayoutMethod() {
-        //title_change.setText("水位");
+        title_change.setText("水位监测");
         /*ShouYe.setImageDrawable(getResources().getDrawable(R.mipmap.firstpage));
         ShouYeText.setTextColor(getResources().getColor(R.color.huise));
         BenZhan.setImageDrawable(getResources().getDrawable(R.mipmap.benzhan));
@@ -932,7 +1119,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     //雨量点击事件
     private void YuLiangLayoutMethod() {
-        //title_change.setText("雨量");
+        title_change.setText("雨量监测");
         /*ShouYe.setImageDrawable(getResources().getDrawable(R.mipmap.firstpage));
         ShouYeText.setTextColor(getResources().getColor(R.color.huise));
         BenZhan.setImageDrawable(getResources().getDrawable(R.mipmap.benzhan));
@@ -943,12 +1130,12 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         YuLiangText.setTextColor(getResources().getColor(R.color.blue));
         JianKong.setImageDrawable(getResources().getDrawable(R.mipmap.jiankong));
         JianKongText.setTextColor(getResources().getColor(R.color.huise));*/
-        switchFragment(mZhuYeFragment,ShuiWeiFragment, BenzhangFragment, AiCgisFragment, JianKongFragment, YuLiangFragment,"YuLiangFragment");
+        switchFragment(mZhuYeFragment,ShuiWeiFragment, BenzhangFragment, AiCgisFragment, JianKongFragment, YuLiangFragment,"YuLiangFragment",null);
     }
 
     //监控点击事件
     private void JianKongLayoutMethod() {
-        //title_change.setText("监控列表");
+        title_change.setText("视频监控");
        /* ShouYe.setImageDrawable(getResources().getDrawable(R.mipmap.firstpage));
         ShouYeText.setTextColor(getResources().getColor(R.color.huise));
         BenZhan.setImageDrawable(getResources().getDrawable(R.mipmap.benzhan));
@@ -959,7 +1146,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         YuLiangText.setTextColor(getResources().getColor(R.color.huise));
         JianKong.setImageDrawable(getResources().getDrawable(R.mipmap.jiankongmeauclick));
         JianKongText.setTextColor(getResources().getColor(R.color.blue));*/
-        switchFragment(mZhuYeFragment,ShuiWeiFragment, YuLiangFragment, AiCgisFragment, BenzhangFragment, JianKongFragment,"JianKongFragment");
+        switchFragment(mZhuYeFragment,ShuiWeiFragment, YuLiangFragment, AiCgisFragment, BenzhangFragment, JianKongFragment,"JianKongFragment",null);
     }
 
     //popwindow泵站列表点击事件
@@ -1028,7 +1215,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     }
 
 
-    public void switchFragment(Fragment from, Fragment from1, Fragment from2, Fragment from3,Fragment from4, Fragment to,String tag) {
+    public void switchFragment(Fragment from, Fragment from1, Fragment from2, Fragment from3,Fragment from4, Fragment to,String tag,Bundle bundle) {
         FragmentManager fm = getFragmentManager();
         FragmentTransaction transaction = fm.beginTransaction();
         //设置切换的效果
@@ -1048,6 +1235,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
             if (from4.isAdded()) {
                 transaction.hide(from4);
             } //隐藏当前的fragment
+            if(bundle!=null){
+                to.setArguments(bundle);
+            }
             transaction.add(R.id.replace, to,tag).commitAllowingStateLoss(); // 隐藏当前的fragment，add下一个到Activity中
         } else {
             if (from.isAdded()) {
@@ -1113,7 +1303,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
             } else {
                 progressDialog.dismiss();
                 value = val;
-                switchFragment(mZhuYeFragment,BenzhangFragment, YuLiangFragment, AiCgisFragment, JianKongFragment, ShuiWeiFragment,"ShuiWeiFragment");
+                switchFragment(mZhuYeFragment,BenzhangFragment, YuLiangFragment, AiCgisFragment, JianKongFragment, ShuiWeiFragment,"ShuiWeiFragment",null);
                 //Toast.makeText(MainActivity.this,val, Toast.LENGTH_SHORT).show();
             }
         }
@@ -1132,23 +1322,44 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
             if(popupWindow!=null){
                 closePopwindow();
             }
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("是否退出应用");
-            //builder.setTitle("是否退出应用");
-            builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    finish();
-                }
-            });
-            builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    dialogInterface.dismiss();
-                }
-            });
-            builder.show();
-            //return true;
+
+
+            if(isMap==true){//用于判断是否从北斗地图页面返回北斗车辆主页
+                title_change.setText("沈阳经济技术开发区智慧城管");
+                myListener.callBack("","","");   //清除覆盖物图层或者停止计时器
+                isMap=false;
+                meau_IV.setImageDrawable(getResources().getDrawable(R.mipmap.meau));
+                Meau.setText("");
+                Intent bd_intent  = new Intent(MainActivity.this,BeiDouCarLieBiao.class);
+                bd_intent.putExtra("personInformation",getIntent().getStringExtra("personInformation"));
+                startActivity(bd_intent);
+                return false;
+            }
+
+
+
+            if(mZhuYeFragment.isHidden()){
+                ZhuYeLayoutMethod();
+                return false;
+            }else {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage("是否退出应用");
+                //builder.setTitle("是否退出应用");
+                builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        finish();
+                    }
+                });
+                builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                });
+                builder.show();
+                //return true;
+            }
         }
         return super.onKeyDown(keyCode, event);
     }
@@ -1168,24 +1379,49 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         filter.addAction("com.neter.broadcast.receiver.SendDownXMLBroadCast");
         mReceiver = new MyReceiver();
         registerReceiver(mReceiver, filter);
+        //mReceiver.setBRInteractionListener(this);
     }
     private void BD_GJReceiver(){
         IntentFilter filter = new IntentFilter();
-        filter.addAction("com.neter.broadcast.receiver.bdguiji");
+        filter.addAction("com.neter.broadcast.receiver.fanhuizhuye");
         mReceiver = new MyReceiver();
         registerReceiver(mReceiver, filter);
     }
-    public class MyReceiver extends BroadcastReceiver {
+    private String ALLCARNUM;
+   public class MyReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
             if(intent.getAction().equals("com.neter.broadcast.receiver.SendDownXMLBroadCast")){
+                title_change.setText("实时车辆显示");
                 CARNUM=intent.getStringExtra("CARNUM");
+                ALLCARNUM = intent.getStringExtra("ALLcarNum");
+                Log.e("wn",ALLCARNUM);
+                /*Main_back.setEnabled(true);
+                Main_Iv.setVisibility(View.VISIBLE);*/
+
+               /* meau_IV.setImageDrawable(null);
+                Meau.setText("轨迹");
+                Meau.setTextColor(getResources().getColor(R.color.white));
+*/
+                ss=true;
+                isMap=true;
+                //用来表示进入北斗定位地图 每4s一定位 地图刚加载时有效 所以在地图fragment里再判断
+                Bundle bundle = new Bundle();
+                bundle.putString("str",CARNUM);
+
+                switchFragment(mZhuYeFragment,ShuiWeiFragment, YuLiangFragment, BenzhangFragment, JianKongFragment, AiCgisFragment,"AiCgisFragment",bundle );
+                meau_IV.setImageDrawable(null);
+                Meau.setText("轨迹");
+                Meau.setTextColor(getResources().getColor(R.color.white));
                 Main_back.setEnabled(true);
                 Main_Iv.setVisibility(View.VISIBLE);
-                Main_Iv.setImageDrawable(getResources().getDrawable(R.mipmap.bd_search));
-                ss=true;
-                ShouYeLayoutMethod();
+
+                //BD_TimepopWindow();//自动弹出搜索轨迹框
+            }
+            if(intent.getAction().equals("com.neter.broadcast.receiver.fanhuizhuye")){
+                ZhuYeLayoutMethod();
+                ss=false;
             }
         }
     }
@@ -1193,11 +1429,151 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(mReceiver);//必须注销广播，否则有内存泄漏的风险！！！
+        if(mReceiver!=null){
+            unregisterReceiver(mReceiver);//必须注销广播，否则有内存泄漏的风险！！！
+        }
     }
     private void setViewDaXiao(View view,int height){
         LinearLayout.LayoutParams lay =(LinearLayout.LayoutParams)view.getLayoutParams();
         lay.height=height/9;
         view.setLayoutParams(lay);
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case 1: ZhuYeLayoutMethod();break;
+            case 2:ZhuYeLayoutMethod();break;
+            //case 7 :ZhuYeLayoutMethod();break;
+        }
+    }
+    //选择车牌号
+    private String [] arr_ALL;
+    private void CarPai(){
+        arr_ALL= FENJ_ALLcarNum(ALLCARNUM);//获取所有车牌的集合
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("请选择");
+        builder.setSingleChoiceItems(arr_ALL, -1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                String val = arr_ALL[i];
+                BD_GJcarPaiHao.setText(arr_ALL[i]);
+                dialogInterface.dismiss();
+            }
+        });
+        builder.show();
+    }
+    private String [] FENJ_ALLcarNum(String ALLCARNUM){
+        Log.e("warn",ALLCARNUM);
+        //List<String> ALL_list =new ArrayList<String>();
+        String arr [] = ALLCARNUM.split(",");
+
+        return  arr;
+    }
+
+
+    /*//读写sd卡权限
+    private static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE };
+
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+
+
+    //检查版本申请权限
+    private void chechVersion(){
+        if(Build.VERSION.SDK_INT>=23){
+            //检查手机是否有该权限
+            int checkCallPhonePermission = ContextCompat.checkSelfPermission(getApplicationContext(),Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            if(checkCallPhonePermission!= PackageManager.PERMISSION_GRANTED){//当没有该权限时
+                //弹出对话框申请该权限   数组里装的是要申请的权限 id = 0 索引0 申请权限在数组中的位置 返回的数组结果也在数组索引0中
+                ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_STORAGE,REQUEST_EXTERNAL_STORAGE);
+                return;
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        //返回的数组 结果的位置就是申请该权限 申请的权限位置 即索引0
+        if(grantResults[REQUEST_EXTERNAL_STORAGE]==PackageManager.PERMISSION_GRANTED){//已授权
+            Toast.makeText(getApplicationContext(),"授权成功", Toast.LENGTH_SHORT).show();
+        }else{
+            Toast.makeText(getApplicationContext(),"权限被拒绝,有可能导致应用内部错误", Toast.LENGTH_SHORT).show();
+        }
+    }*/
+
+    //setScreenBrightness(brightness); 设置屏幕亮度方法
+    //saveScreenBrightness(brightness);//保存屏幕亮度的方法
+    //设置屏幕亮度
+    private void setScreenMode(int paramInt){
+        try{
+            Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, paramInt);
+        }catch (Exception localException){
+            localException.printStackTrace();
+        }
+    }
+    private void setScreenBrightness(int paramInt){
+
+        //Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, paramInt);
+        //paramInt = Settings.System.getInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, -1);
+        WindowManager.LayoutParams localLayoutParams =  getWindow().getAttributes();
+        float f = paramInt / 255.0F;
+        localLayoutParams.screenBrightness = f;
+        getWindow().setAttributes(localLayoutParams);
+
+    }
+    private void saveScreenBrightness(int paramInt){
+        try{
+            Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, paramInt);
+        }
+        catch (Exception localException){
+            localException.printStackTrace();
+        }
+    }
+
+
+
+    //检查更新
+    private void updata() {
+        UpdateManager um = new UpdateManager(MainActivity.this);
+        um.checkUpdate();
+    }
+    //检查版本申请权限
+    //在Fragment中申请权限，不要使用ActivityCompat.requestPermissions,
+    // 直接使用Fragment的requestPermissions方法，否则会回调到Activity的 onRequestPermissionsResult
+    private void chechVersion() {
+        int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 0;
+        if (Build.VERSION.SDK_INT >= 23) {
+            //检查手机是否有该权限
+            int checkCallPhonePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
+            if (checkCallPhonePermission != PackageManager.PERMISSION_GRANTED) {//当没有该权限时
+                //弹出对话框申请该权限   数组里装的是要申请的权限 id = 0 索引0 申请权限在数组中的位置 返回的数组结果也在数组索引0中
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
+                return;
+            } else {
+                updata();
+            }
+        } else {
+            updata();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        //返回的数组 结果的位置就是申请该权限 申请的权限位置 即索引0
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {//已授权
+            Toast.makeText(MainActivity.this, "授权成功", Toast.LENGTH_SHORT).show();
+            updata();
+        } else {
+            Toast.makeText(MainActivity.this, "您拒绝了该权限，可能会导致应用内部出现问题，请尽快授权", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
+
 }

@@ -85,7 +85,9 @@ public class CameraPlayXXActivity extends AppCompatActivity {
         p.bStop*/
         //Intent mIntent=getIntent();
         m_serverIp = VideoMonitoring.getIp();
+        Log.e("warn","IP:"+m_serverIp);
         m_serverPort =  VideoMonitoring.getPort();
+        Log.e("warn","port:"+m_serverPort);
         m_serverUserName =  VideoMonitoring.getLoginName();
         m_serverPassword =VideoMonitoring.getLoginPWD();
         m_channelId =VideoMonitoring.getChannelID();
@@ -240,10 +242,15 @@ public class CameraPlayXXActivity extends AppCompatActivity {
                 //Toast.makeText(getApplicationContext(), "login failed" + result, Toast.LENGTH_SHORT).show();
                 m_loginHandle = 0;
 
-
+                if(isState){
+                    return;//代表退出了activity
+                }
 
                 if(result==3)
                 {
+                    if(isState){
+                        return;//代表退出了activity
+                    }
                     AlertDialog.Builder builder=new AlertDialog.Builder(CameraPlayXXActivity.this);
                     builder.setMessage("摄像头登录失败("+result+")");
                     builder.setTitle("提示");
@@ -259,6 +266,9 @@ public class CameraPlayXXActivity extends AppCompatActivity {
                 }
                 else if(result==4)
                 {
+                    if(isState){
+                        return;//代表退出了activity
+                    }
                     AlertDialog.Builder builder=new AlertDialog.Builder(CameraPlayXXActivity.this);
                     builder.setMessage("摄像头登录已经超过最大连接数("+result+")");
                     builder.setTitle("提示");
@@ -274,6 +284,9 @@ public class CameraPlayXXActivity extends AppCompatActivity {
                 }
                 else
                 {
+                    if(isState){
+                        return;//代表退出了activity
+                    }
                     AlertDialog.Builder builder=new AlertDialog.Builder(CameraPlayXXActivity.this);
                     builder.setMessage("摄像头登录失败("+result+")");
                     builder.setTitle("提示");
@@ -355,10 +368,10 @@ public class CameraPlayXXActivity extends AppCompatActivity {
         }
         return super.onKeyDown(keyCode, event);
     }
-
+    private boolean isState = false;//true activity销毁了 FALSE activity未销毁
     @Override
     protected void onDestroy() {
-
+        isState=true;
         super.onDestroy();
     }
 

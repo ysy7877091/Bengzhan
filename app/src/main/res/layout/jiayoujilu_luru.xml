@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#00000000"
+    android:orientation="vertical">
+
+
+    <RelativeLayout
+        android:id="@+id/top"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="#00a4e7">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:paddingLeft="10dp"
+            android:src="@mipmap/icon" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#00000000"
+            android:id="@+id/write_back"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="加油记录录入"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp" />
+
+    </RelativeLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:layout_margin="10dp"
+        android:background="@drawable/edittext_biankuang">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:paddingLeft="10dp"
+            android:text="驾驶员姓名"
+            android:textColor="#999999" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical">
+
+            <EditText
+                android:id="@+id/tv_jiayoujilu_Name"
+                android:layout_width="@dimen/x100"
+                android:layout_height="match_parent"
+                android:layout_alignParentRight="true"
+                android:paddingRight="10dp"
+                android:layout_centerVertical="true"
+                android:background="@null"
+                android:textSize="14sp"
+                android:gravity="right|center_vertical"
+                android:textColor="#000000" />
+
+        </RelativeLayout>
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:layout_margin="10dp"
+        android:background="@drawable/edittext_biankuang">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:paddingLeft="10dp"
+            android:text="车牌号"
+            android:textColor="#999999" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tv_jiayoujilu_carNumber"
+                android:layout_width="@dimen/x100"
+                android:gravity="right|center_vertical"
+                android:layout_height="match_parent"
+                android:layout_alignParentRight="true"
+                android:paddingRight="10dp"
+                android:textSize="14sp"
+                android:textColor="#000000" />
+
+        </RelativeLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:layout_margin="10dp"
+        android:background="@drawable/edittext_biankuang">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:paddingLeft="10dp"
+            android:text="加油时间"
+            android:textColor="#000000" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tv_jiayoujilu_shiJian"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:paddingRight="10dp"
+                android:layout_centerVertical="true"
+                android:textSize="14sp"
+                android:textColor="#000000" />
+
+        </RelativeLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:layout_margin="10dp"
+        android:background="@drawable/edittext_biankuang">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:paddingLeft="10dp"
+            android:text="加油量"
+            android:textColor="#999999" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="L"
+                android:layout_alignParentRight="true"
+                android:layout_centerInParent="true"
+                android:id="@+id/oIL_danwei"
+                android:layout_marginRight="10dp"
+                />
+            <EditText
+                android:id="@+id/tv_jiayoujilu_jiaYouLiang"
+                android:layout_width="@dimen/x100"
+                android:gravity="right|center_vertical"
+                android:layout_height="match_parent"
+                android:layout_toLeftOf="@id/oIL_danwei"
+                android:paddingRight="5dp"
+                android:textSize="14sp"
+                android:background="@null"
+                android:textColor="#000000" />
+
+        </RelativeLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:layout_margin="10dp"
+        android:background="@drawable/edittext_biankuang">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:paddingLeft="10dp"
+            android:text="加油金额"
+            android:textColor="#999999" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="元"
+                android:layout_alignParentRight="true"
+                android:layout_centerInParent="true"
+                android:id="@+id/money_danwei"
+                android:layout_marginRight="10dp"
+                />
+
+            <EditText
+                android:id="@+id/tv_jiayoujilu_RMB"
+                android:layout_width="@dimen/x100"
+                android:layout_height="match_parent"
+                android:gravity="right|center_vertical"
+                android:layout_toLeftOf="@id/money_danwei"
+                android:paddingRight="5dp"
+                android:background="@null"
+                android:textSize="14sp"
+                android:textColor="#000000" />
+
+        </RelativeLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="35dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="20dp"
+            android:text="发票照片"
+            android:textColor="#000000" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:background="@drawable/edittext_biankuang"
+        android:gravity="center"
+        android:id="@+id/iv_fapiao_Phone">
+
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scaleType="fitXY"
+            android:src="@mipmap/jiayou_fapiao"
+            android:id="@+id/photo_car"
+            />
+
+
+    </LinearLayout>
+<RelativeLayout
+    android:layout_marginBottom="10dp"
+    android:layout_gravity="center_horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+
+    <ImageView
+        android:id="@+id/iv_yaoujilu_baocunxinxi"
+        android:layout_alignParentBottom="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/baocun_xinxi"/>
+
+
+</RelativeLayout>
+</LinearLayout>

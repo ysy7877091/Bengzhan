@@ -52,11 +52,11 @@
             android:layout_height="wrap_content"
             android:text="单位(mm)"/>
     </LinearLayout>
-    <com.github.mikephil.charting.charts.BarChart
+    <com.github.mikephil.charting.charts.HorizontalBarChart
         android:id="@+id/HBchart1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="10dp"
+        android:layout_margin="20dp"
         />
 </LinearLayout>
 

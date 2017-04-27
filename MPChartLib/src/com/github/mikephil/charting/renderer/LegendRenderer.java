@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Typeface;
+import android.util.Log;
 
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.ChartData;
@@ -283,6 +284,7 @@ public class LegendRenderer extends Renderer {
                 int lineIndex = 0;
 
                 for (int i = 0, count = labels.length; i < count; i++) {
+
                     if (i < calculatedLabelBreakPoints.length && calculatedLabelBreakPoints[i]) {
                         posX = originPosX;
                         posY += labelLineHeight + labelLineSpacing;
@@ -357,8 +359,16 @@ public class LegendRenderer extends Renderer {
                                 + mLegend.getYOffset();
                         break;
                 }
-
+                //循环画示例
                 for (int i = 0; i < labels.length; i++) {
+                    //水位判断画line警戒线
+                    if(i==labels.length-1&&labels.length==7&&labels[6].contains("警戒线")){
+                        mLegend.setForm(Legend.LegendForm.LINE);
+                    }else if(i==labels.length-1&&labels.length==18&&labels[17].contains("警戒线")){//雨量判断画line警戒线
+                        mLegend.setForm(Legend.LegendForm.LINE);
+                    }else{
+                        mLegend.setForm(Legend.LegendForm.CIRCLE);
+                    }
 
                     Boolean drawingForm = colors[i] != ColorTemplate.COLOR_SKIP;
                     float posX = originPosX;
@@ -417,7 +427,7 @@ public class LegendRenderer extends Renderer {
      * @param y     position
      * @param index the index of the color to use (in the colors array)
      */
-    protected void drawForm(Canvas c, float x, float y, int index, Legend legend) {
+    protected void drawForm(Canvas c, float x, float y, int index, Legend legend) { //调取这个方法的是要画示例
 
         if (legend.getColors()[index] == ColorTemplate.COLOR_SKIP)
             return;

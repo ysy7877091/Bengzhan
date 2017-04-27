@@ -104,8 +104,12 @@ public class QiTiFragment extends Fragment {
             }
             else{
                 List<QiTiBaoJing> list=DataFenGe(val);
-                qiTiAdapter adapter = new qiTiAdapter(getActivity(),list,Name);
-                BJ_Gas.setAdapter(adapter);
+                if(list.size()>0) {
+                    qiTiAdapter adapter = new qiTiAdapter(getActivity(), list, Name);
+                    BJ_Gas.setAdapter(adapter);
+                }else{
+                    Toast.makeText(getActivity(), "无报警信息", Toast.LENGTH_SHORT).show();
+                }
                 progressDialog.dismiss();
             }
         }
@@ -156,6 +160,17 @@ public class QiTiFragment extends Fragment {
                     handler.sendMessage(msg);
                 }
             }.start();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(progressDialog!=null){
+            if(progressDialog.isShowing()){
+                progressDialog.dismiss();
+            }
+            progressDialog=null;
         }
     }
 }

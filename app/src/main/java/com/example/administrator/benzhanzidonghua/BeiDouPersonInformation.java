@@ -1,5 +1,6 @@
 package com.example.administrator.benzhanzidonghua;
 
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -33,6 +34,7 @@ public class BeiDouPersonInformation extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.person_info);
         Button person_Back = (Button)findViewById(R.id.person_Back);
         person_Back.setOnClickListener(new View.OnClickListener() {
@@ -54,23 +56,42 @@ public class BeiDouPersonInformation extends AppCompatActivity {
                 Toast.makeText(this, "人员图片无", Toast.LENGTH_SHORT).show();
             }
         TextView person_Name = (TextView)findViewById(R.id.tv_person_Name);//人员姓名
-        person_Name.setText(arr[1]);
+        if(!arr[1].equals("anyType{}")){
+            person_Name.setText(arr[1]);
+        }
         TextView person_sex = (TextView)findViewById(R.id.tv_person_sex);//人员性别
-        person_sex.setText(arr[2]);
+        if(!arr[2].equals("anyType{}")){
+            person_sex.setText(arr[2]);
+        }
         TextView person_Number =(TextView)findViewById(R.id.tv_person_Number);//人员电话
-        person_Number.setText(arr[4]);
+        if(!arr[4].equals("anyType{}")){
+            person_Number.setText(arr[4]);
+        }
         TextView person_FenZu =(TextView)findViewById(R.id.tv_person_FenZu);//所属分zu
-        person_FenZu.setText(arr[3]);
+        if(!arr[3].equals("anyType{}")){
+            person_FenZu.setText(arr[3]);
+        }
         TextView JiaShiZhengBianHao =(TextView)findViewById(R.id.tv_person_JiaShiZhengBianHao);//驾驶证编号
-        JiaShiZhengBianHao.setText(arr[5]);
+        if(!arr[5].equals("anyType{}")){
+            JiaShiZhengBianHao.setText(arr[5]);
+        }
         TextView person_JiaLing =(TextView)findViewById(R.id.tv_person_JiaLing);//驾龄
-        person_JiaLing.setText(arr[8]);
+        if(!arr[8].equals("anyType{}")){
+            person_JiaLing.setText(arr[8]);
+        }
         TextView NianJianQiXian =(TextView)findViewById(R.id.tv_person_NianJianQiXian);//年检期限
-        NianJianQiXian.setText(arr[7]);
+        if(!arr[7].equals("anyType{}")){
+            NianJianQiXian.setText(arr[7]);
+        }
         TextView person_SuoShuDanWei =(TextView)findViewById(R.id.tv_person_SuoShuDanWei);//所属单位
-        person_SuoShuDanWei.setText(arr[6]);
+        if(!arr[6].equals("anyType{}")){
+            person_SuoShuDanWei.setText(arr[6]);
+        }
+
         TextView tv_JiaShiZhengJiBie =(TextView)findViewById(R.id.tv_JiaShiZhengJiBie);//驾驶证级别
-        tv_JiaShiZhengJiBie.setText(arr[9]);
+        if(!arr[9].equals("anyType{}")){
+            tv_JiaShiZhengJiBie.setText(arr[9]);
+        }
     }
     Runnable networkTask = new Runnable() {
         @Override
@@ -82,7 +103,7 @@ public class BeiDouPersonInformation extends AppCompatActivity {
                 // 调用的方法名称
                 String methodName = "Get_PersonInfo";
                 // EndPoint
-                String endPoint = "http://beidoujieshou.sytxmap.com:5963/GPSService.asmx";
+                String endPoint = Path.get_ZanShibeidouPath();
                 // SOAP Action
                 String soapAction = "http://tempuri.org/Get_PersonInfo";
                 // 指定WebService的命名空间和调用的方法名
@@ -117,6 +138,10 @@ public class BeiDouPersonInformation extends AppCompatActivity {
                 // 得到服务器传回的数据 数据时dataset类型的
                 int count1 = object.getPropertyCount();
                 Log.e("warn",String.valueOf(count1));
+                if(count1==0){
+                    Toast.makeText(BeiDouPersonInformation.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if(count1>0)
                 {
                     sb = new StringBuffer();
@@ -146,7 +171,7 @@ public class BeiDouPersonInformation extends AppCompatActivity {
             int i = msg.what;
             if(i==0){
                 progressDialog.dismiss();
-                Toast.makeText(getApplicationContext(),"网络或服务器异常",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"无人员信息",Toast.LENGTH_SHORT).show();
             }else if(i==1){
                 progressDialog.dismiss();
                 String str = (String) msg.obj;

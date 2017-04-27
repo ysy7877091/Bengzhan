@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     >
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -11,10 +12,9 @@
         android:orientation="horizontal"
         >
     <ImageView
-        android:layout_width="wrap_content"
+        android:layout_width="50dp"
         android:layout_height="wrap_content"
         android:src="@mipmap/chaosu"
-        android:layout_marginLeft="20dp"
         android:layout_margin="20dp"
         android:id="@+id/bd_iv"
         />
@@ -22,8 +22,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="超速报警"
-        android:layout_marginLeft="30dp"
-        android:layout_gravity="center"
+        android:layout_marginLeft="20dp"
+        android:layout_gravity="center_vertical"
         android:textColor="@color/white"
         android:id="@+id/bd_tv"/>
     </LinearLayout>

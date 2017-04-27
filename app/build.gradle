@@ -7,14 +7,20 @@ android {
         applicationId "com.example.administrator.benzhanzidonghua"
         minSdkVersion 14
         targetSdkVersion 25
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName "2.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+            lintOptions{
+                checkReleaseBuilds false
+                abortOnError false
+
+        }
     }
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
         }
     }
     packagingOptions{
@@ -36,6 +42,7 @@ dependencies {
     //compile files('libs/httpcore-4.0.jar')
     //compile files('libs/jackson-core-1.9.5.jar')
     compile project(':MPChartLib')
-    compile files('libs/ksoap2-android-assembly-2.4-jar-with-dependencies.jar')
     compile 'com.google.android.gms:play-services-appindexing:8.4.0'
+    compile files('libs/volley.jar')
+    compile files('libs/ksoap2-android-assembly-2.4-jar-with-dependencies.jar')
 }

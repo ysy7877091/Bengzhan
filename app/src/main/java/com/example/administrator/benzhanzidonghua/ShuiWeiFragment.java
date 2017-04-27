@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.HorizontalBarChart;
 import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
@@ -32,12 +33,15 @@ import java.util.List;
 public class ShuiWeiFragment extends Fragment {
     private View view;
     private HorizontalBarChart mChart;
+    private HorizontalBarChart chart2;
     private String value="";
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         inflater=LayoutInflater.from(getActivity());
         view =inflater.inflate(R.layout.shuiwei_layout,container,false);
         mChart=(HorizontalBarChart)view.findViewById(R.id.chart1);
+        chart2 = (HorizontalBarChart)view.findViewById(R.id.chart2);
+        chart2 .setNoDataText("");//更改图表无数据时，图表上显示的内容(no chart data available)
         LinearLayout YuLiangLiShi_ll=(LinearLayout)view.findViewById(R.id.YuLiangLiShi_ll);
         while(true) {
             if (value.equals("")) {
@@ -77,7 +81,8 @@ public class ShuiWeiFragment extends Fragment {
             for(int i=0;i<ColorTemplate.SW_Simaple.length;i++){
                 myColors[i]=ColorTemplate.SW_Simaple[i];
             }
-            lbls1[0]="0-1";lbls1[1]="1-2";lbls1[2]="2-4";lbls1[3]="4-6";lbls1[4]="6-8";lbls1[5]="以上";
+            lbls1[0]="0-1";lbls1[1]="1-2";lbls1[2]="2-4";lbls1[3]="4-6";lbls1[4]="6-8";lbls1[5]="以上";lbls1[6]="警戒线";
+
 
 
             float start = 0f;
@@ -86,7 +91,6 @@ public class ShuiWeiFragment extends Fragment {
             ArrayList<BarEntry> yVals1 = new ArrayList<BarEntry>();
             ArrayList<String> xVals = new ArrayList<String>();//x轴数据
            mChart.getXAxis().setAxisMinValue(start);//获取x轴对象并设置x轴最小值
-
             for (int i = 0; i < objects.length-10; i++) {
                 Log.d("DEBUG", "WebService结果_回调函数objects[i]：" + objects[i].toString());
                 if (objects[i].length() > 0) {
@@ -127,6 +131,9 @@ public class ShuiWeiFragment extends Fragment {
             mChart.animateY(2500);
             //X轴
             mChart.setDrawGridBackground(false);
+
+
+
             XAxis xAxis = mChart.getXAxis();
             xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
             //xAxis.setTypeface(mTfLight);
@@ -134,29 +141,58 @@ public class ShuiWeiFragment extends Fragment {
             xAxis.setSpaceBetweenLabels(1);
             xAxis.setDrawLabels(true);//是否显示X轴数值
             xAxis.setDrawGridLines(false);
+            xAxis.setAxisMinValue(-0.5f); //设置x轴坐标起始值为-0.5 防止其实条形图被切去一半
             //xAxis.setGranularity(1f); // only intervals of 1 day
             //xAxis.setEnabled(false);
+
 
             //AxisValueFormatter custom = new MyAxisValueFormatter();
             //Y轴
             YAxis leftAxis = mChart.getAxisLeft();
             //leftAxis.setTypeface(mTfLight);
-            leftAxis.setLabelCount(4, false);//设置y轴数据个数
+            leftAxis.setLabelCount(5, false);//设置y轴数据个数
+            leftAxis.setAxisMaxValue(10);
+            leftAxis.setAxisMinValue(2);
             //leftAxis.setValueFormatter(custom);
             leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
             leftAxis.setSpaceTop(15f);
             leftAxis.setAxisMinValue(0f); // this replaces setStartAtZero(true)
 
+            //可以设置一条警戒线，如下：
+            LimitLine ll = new LimitLine(6, "");//第一个参数为警戒线在坐标轴的位置，第二个参数为警戒线描述
+            ll.setLineColor(Color.rgb(255,33,33));
+            ll.setLineWidth(1f);
+            ll.setTextColor(Color.GRAY);
+            ll.setTextSize(12f);
+            // .. and more styling options
+            leftAxis.addLimitLine(ll);
 
 
-            //例示
-            Legend l = mChart.getLegend();
+            Legend l = mChart.getLegend();//示例
+            //Legend l = mChart.getLegend();
             l.setPosition(Legend.LegendPosition.RIGHT_OF_CHART);//RIGHT_OF_CHART
-            l.setForm(Legend.LegendForm.CIRCLE);
+            //l.setForm(Legend.LegendForm.CIRCLE);//示例样式不一样 不能先预设值一个样式
             l.setFormSize(8f);//8f
             l.setTextSize(8f);
             l.setXEntrySpace(4f);
-            l.setCustom(myColors, lbls1);//设置每个柱状图颜色缩小版提示 颜色和文字 例如此应用的右上角显示的一列各色圆形提示
+            l.setCustom(myColors,lbls1);//设置每个柱状图颜色缩小版提示 颜色和文字 例如此应用的右上角显示的一列各色圆形提示
+
+
+            /*int [] color_l = {Color.rgb(255,33,33)};
+            String [] descripition ={"警戒线"};
+            //例示
+            Legend l1 = chart2.getLegend();//示例
+            //Legend l = mChart.getLegend();
+            l1.setPosition(Legend.LegendPosition.RIGHT_OF_CHART_CENTER);//RIGHT_OF_CHART
+            l1.setForm(Legend.LegendForm.LINE);
+            l1.setFormSize(8f);//8f
+            l1.setTextSize(8f);
+            l1.setXEntrySpace(4f);
+            l1.setCustom(color_l,descripition);//设置每个柱状图颜色缩小版提示 颜色和文字 例如此应用的右上角显示的一列各色圆形提示*/
+
+            //setLegendStyle(myColors,lbls1);
+
+
             BarDataSet set1;
                 //判断图表中原来是否有数据
             if (mChart.getData() != null && mChart.getData().getDataSetCount() > 0) {
@@ -169,7 +205,7 @@ public class ShuiWeiFragment extends Fragment {
                 set1 = new BarDataSet(yVals1, "水位监测");
                 //set1.setColors(ColorTemplate.MATERIAL_COLORS);//设置柱状图的各种颜色，
                 set1.setBarSpacePercent(50f);//设置柱间空白的宽度
-                set1.setColors(list);
+                set1.setColors(list);//设置柱状图颜色
                 //set1.setBarSpacePercent(10);
                 // set custom labels and colors
                 //设置柱状图颜色，第一个color.rgb为第一个柱状图颜色。以此类推
@@ -217,5 +253,28 @@ public class ShuiWeiFragment extends Fragment {
         }else{
             list.add(getResources().getColor(R.color.yl13));//棕色
         }
+    }
+    private void setLegendStyle(int [] myColors,String [] lbls1){
+        String[] lbls11 ={"警戒线"};//示例说明
+        int[] myColors1 = {Color.rgb(255,33,33)};
+        //例示
+        Legend l = mChart.getLegend();//示例
+        //Legend l = mChart.getLegend();
+        l.setPosition(Legend.LegendPosition.RIGHT_OF_CHART);//RIGHT_OF_CHART
+        for(int i=0;i<7;i++){
+            if(i==0||i==6){
+                if(i==0){
+                    l.setForm(Legend.LegendForm.CIRCLE);
+                }else{
+                    l.setForm(Legend.LegendForm.LINE);
+                    l.setFormSize(8f);//8f
+                    l.setTextSize(8f);
+                    l.setXEntrySpace(4f);
+                    l.setCustom(myColors, lbls1);//设置每个柱状图颜色缩小版提示 颜色和文字 例如此应用的右上角显示的一列各色圆形提示
+                }
+            }
+
+        }
+
     }
 }

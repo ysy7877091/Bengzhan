@@ -245,7 +245,7 @@ public class Legend extends ComponentBase {
      * 
      * @return
      */
-    public int[] getColors() {
+    public int[] getColors() {//获取设置legend之后的颜色  调取这个方法的是要画示例
         return mColors;
     }
 
@@ -254,7 +254,7 @@ public class Legend extends ComponentBase {
      * 
      * @return
      */
-    public String[] getLabels() {
+    public String[] getLabels() {//获取设置legend之后的描述 调取这个方法的是要画示例
         return mLabels;
     }
 
@@ -347,7 +347,18 @@ public class Legend extends ComponentBase {
         mLabels = Utils.convertStrings(labels);
         mIsLegendCustom = true;
     }
+    //改变之后的
+    public void setCustom1(List<Integer> colors, List<String> labels,Legend l) {
 
+        if (colors.size() != labels.size()) {
+            throw new IllegalArgumentException(
+                    "colors array and labels array need to be of same size");
+        }
+
+        mColors = Utils.convertIntegers1(colors,l);
+        mLabels = Utils.convertStrings(labels);
+        mIsLegendCustom = true;
+    }
     /**
      * Calling this will disable the custom legend labels (set by
      * setCustom(...)). Instead, the labels will again be calculated
@@ -651,6 +662,7 @@ public class Legend extends ComponentBase {
      * 
      * @param mFormToTextSpace
      */
+    //mFormToTextSpace
     public void setFormToTextSpace(float space) {
         this.mFormToTextSpace = Utils.convertDpToPixel(space);
     }
@@ -711,6 +723,7 @@ public class Legend extends ComponentBase {
      * @param mLegendLabelPaint
      * @return
      */
+    //mLegendLabelPaint
     public float getFullHeight(Paint labelpaint) {
 
         float height = 0f;

@@ -34,6 +34,7 @@ public class MyApplicationData {
     public static void set_GisIndentfyBengZhanInfor(BengZhanClass gisIndentfyBengZhanInfor)
     {
         _GisIndentfyBengZhanInfor=gisIndentfyBengZhanInfor;
+
     }
 
 

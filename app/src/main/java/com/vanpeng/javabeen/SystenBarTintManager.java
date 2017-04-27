@@ -73,6 +73,7 @@ public class SystenBarTintManager {
      * @param activity The host activity.
      */
     @TargetApi(19)
+    @SuppressWarnings("ResourceType")
     public SystenBarTintManager(Activity activity) {
 
         Window win = activity.getWindow();

@@ -15,6 +15,9 @@ public class Path {
     private static String _MapUrl="http://ysmapservices.sytxmap.com/arcgis/rest/services/New/ZongTu_Wai/MapServer";
     private static String _BengZhanMapIndex="http://ysmapservices.sytxmap.com/arcgis/rest/services/New/ZongTu_Wai/MapServer/0";
     private static String _BengZhanZhuJi="泵站注记";
+    private static String _beidouPath="http://beidoujieshou.sytxmap.com:5963/GPSService.asmx";
+    //private static String _beidouPath="http://192.168.90.122:5563/GPSService.asmx";
+    //private static String _beidouPath="http://beidoujieshou.sytxmap.com:5563/GPSService.asmx";
     //下载新版本的接口地址
     private static String _AppUpdateUrl="http://appwebservices.bengzhan.sytxmap.com/update/version.xml";
 
@@ -41,7 +44,10 @@ public class Path {
     {
         return _WebServicesConnectionPWD;
     }
-
+    public static String get_ZanShibeidouPath()
+    {
+        return _beidouPath;
+    }
     public static String get_WebServicesURL()
     {
         return  _WebServicesURL;

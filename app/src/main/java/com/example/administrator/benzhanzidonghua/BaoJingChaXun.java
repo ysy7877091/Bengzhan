@@ -8,21 +8,14 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.TextAppearanceSpan;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dataandtime.data.DatePickerDialog;
-import com.dataandtime.time.RadialPickerLayout;
-import com.dataandtime.time.TimePickerDialog;
 
 import java.util.Calendar;
 
@@ -43,17 +36,15 @@ public class BaoJingChaXun extends AppCompatActivity implements DatePickerDialog
     private String end="";
     //标题栏上空白位置的日期
     private TextView BJ_tv;
-
     private TextView tv_startTime;//开始时间
     private TextView tv_endTime;//结束时间
     private String val;
-
     private String sub_StartTime="";
     private String sub_EndTime="";
-
     private String [] arr;//泵站ID
     private String ID;
     private Bundle savedState;
+    private TextView warn_TV;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +59,8 @@ public class BaoJingChaXun extends AppCompatActivity implements DatePickerDialog
         BJ_tv=(TextView) findViewById(R.id.BJ_tv);
         //BJ_tv.setText(Start+" "+"-"+end);
         //返回
+        /*warn_TV = (TextView)findViewById(R.id.warn_TV);
+        warn_TV.setOnClickListener(new BaoJingChaXunListener());*/
         Button BJM_button = (Button)findViewById(R.id.BJM_button);
         BJM_button.setOnClickListener(new BaoJingChaXunListener());
         /*ImageView BJ_back = (ImageView) findViewById(BJ_back);
@@ -84,19 +77,20 @@ public class BaoJingChaXun extends AppCompatActivity implements DatePickerDialog
         //选择本站名称
         BJ_BengZhanName=(TextView) findViewById(R.id.BJ_BengZhanName);
         BJ_BengZhanName.setOnClickListener(new BaoJingChaXunListener());
+        getSystemTime();//获取系统时间
         SelectStartTime();//自定义时间选择
     }
     //自定义选择日期事件
     @Override
     public void onDateSet(DatePickerDialog datePickerDialog, int year, int month, int day) {
         String hourOfDayString  = String.valueOf(year);
-        String minuteString = String.valueOf(month);
+        String minuteString = String.valueOf(month+1);
         String dayString = String.valueOf(day);
         if(minuteString.length()==1){
             minuteString="0"+minuteString;
         }
         if(dayString.length()==1){
-            hourOfDayString = "0"+hourOfDayString;
+            dayString = "0"+dayString;
         }
         //Toast.makeText(this, "new time:" +hourOfDayString+"-"+ minuteString+ "-" +dayString, Toast.LENGTH_LONG).show();
             if(startOrend==true){//选择开始时间
@@ -114,6 +108,8 @@ public class BaoJingChaXun extends AppCompatActivity implements DatePickerDialog
         public void onClick(View view) {
             switch (view.getId()){
                 case R.id.BJM_button:
+                                    Intent intentOK = new Intent();
+                                    setResult(1,intentOK);
                                     finish();
                                     break;
                 /*case R.id.StartTime:
@@ -152,9 +148,59 @@ public class BaoJingChaXun extends AppCompatActivity implements DatePickerDialog
                                             }
                                             break;
                 case R.id.BJ_BengZhanName:
-                                            SelectBZName();
+                                            if(BZ_name!=null&&BZ_name.length>1){
+                                                setDialog();
+                                            }else{
+                                                SelectBZName();
+                                            }
                                             break;
+              /*  case R.id.warn_TV:
+                                    select24Hour();
+                                    break;*/
             }
+        }
+    }
+    //雨量查询选择时间24小时
+    private void select24Hour(){
+        final String [] arr_Time = {"24小时","无限制"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(BaoJingChaXun.this);
+        builder.setTitle("请选择");
+        builder.setSingleChoiceItems(arr_Time, -1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                String val = arr_Time[i];
+                warn_TV.setText(val);
+                dialogInterface.dismiss();
+                if(val.equals("24小时")){
+                    tv_startTime.setEnabled(false);
+                    tv_endTime.setEnabled(false);
+                    tv_startTime.setText(year+"-"+month+"-"+day);
+                    sub_StartTime=year+"-"+month+"-"+day;
+                    tv_endTime.setText(year+"-"+month+"-"+day);
+                    sub_EndTime=year+"-"+month+"-"+day;
+                    BJ_tv.setText(year+"-"+month+"-"+day+" "+"至"+" "+year+"-"+month+"-"+day);
+                }else{
+                    tv_startTime.setEnabled(true);
+                    tv_endTime.setEnabled(true);
+                }
+            }
+        });
+        builder.show();
+    }
+    private String year;
+    private String month;
+    private String day;
+    private void getSystemTime(){
+        Calendar calendar = Calendar.getInstance();
+        year = String.valueOf(calendar.get(Calendar.YEAR));
+        month = String.valueOf(calendar.get(Calendar.MONTH)+1);
+        day =  String.valueOf(calendar.get(Calendar.DAY_OF_MONTH));
+
+        if(month.length()==1){
+            month = "0"+month;
+        }
+        if(day.length()==1){
+            day= "0"+day;
         }
     }
     private void SelectBZName(){
@@ -185,11 +231,11 @@ public class BaoJingChaXun extends AppCompatActivity implements DatePickerDialog
         };
         new Thread(networkGetBengZhanInfoNew).start();
     }
+    private String [] BZ_name;
     public Handler handlerGetBengZhanListNew = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            final String [] BZ_name;
             val = (String) msg.obj;
             if (val.toString().equals("999999")) {
                 progressDialog.dismiss();
@@ -212,24 +258,27 @@ public class BaoJingChaXun extends AppCompatActivity implements DatePickerDialog
                         }
                 }
                 BZ_name[0]="全部";
-                AlertDialog.Builder builder = new AlertDialog.Builder(BaoJingChaXun.this);
-                builder.setTitle("请选择");
-                builder.setSingleChoiceItems(BZ_name, -1, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        String val = BZ_name[i];
-                        BJ_BengZhanName.setText(val);
-                        if(!val.equals("全部")) {//判断是否选的是全部泵站
-                            ID = arr[i-1];
-                        }
-                        dialogInterface.dismiss();
-                    }
-                });
-                builder.show();
+                setDialog();
             }
 
         }
     };
+    private void setDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(BaoJingChaXun.this);
+        builder.setTitle("请选择");
+        builder.setSingleChoiceItems(BZ_name, -1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                String val = BZ_name[i];
+                BJ_BengZhanName.setText(val);
+                if(!val.equals("全部")) {//判断是否选的是全部泵站
+                    ID = arr[i-1];
+                }
+                dialogInterface.dismiss();
+            }
+        });
+        builder.show();
+    }
     //选择开始或结束时间
     public static final String DATEPICKER_TAG = "datepicker";
     public static final String TIMEPICKER_TAG = "Starttimepicker";
@@ -368,5 +417,6 @@ public class BaoJingChaXun extends AppCompatActivity implements DatePickerDialog
         builder.show();
 */
     }
+
 
 }

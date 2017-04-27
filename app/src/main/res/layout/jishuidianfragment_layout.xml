@@ -5,15 +5,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
+
 <TextView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:text="单位:cm"
+    android:text="单位:m"
     android:layout_marginTop="3dp"
     android:layout_marginLeft="3dp"
     android:textColor="@color/yl03"
     />
-    <com.github.mikephil.charting.charts.LineChart
+    <com.github.mikephil.charting.charts.HorizontalBarChart
         android:id="@+id/lineChart"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

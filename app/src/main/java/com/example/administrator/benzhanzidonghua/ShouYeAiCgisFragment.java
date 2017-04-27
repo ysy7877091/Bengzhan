@@ -9,16 +9,25 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PaintFlagsDrawFilter;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.opengl.Visibility;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.util.Xml;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -48,13 +57,12 @@ import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
 import com.esri.core.map.Graphic;
+import com.esri.core.symbol.PictureMarkerSymbol;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
-import com.esri.core.symbol.TextSymbol;
 import com.esri.core.tasks.identify.IdentifyParameters;
 import com.esri.core.tasks.identify.IdentifyResult;
 import com.esri.core.tasks.identify.IdentifyTask;
-import com.vanpeng.javabeen.BD_GJChankan;
 import com.vanpeng.javabeen.BengZhanClass;
 import com.vanpeng.javabeen.RequestWebService;
 import com.vanpeng.javabeen.ShuiBengClass;
@@ -64,12 +72,24 @@ import org.ksoap2.SoapEnvelope;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.AndroidHttpTransport;
+import org.xmlpull.v1.XmlPullParser;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+
+
 
 /**
  * Created by Administrator on 2016/12/19.
@@ -113,12 +133,53 @@ public class ShouYeAiCgisFragment extends Fragment {
     private MyProgressDialog progressDialog = null;
     private ImageView QingKongGuiJi;
     private Envelope el;
+    private String CARNUM;
+    private ImageView LuWang;
+
+    private Envelope ell;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         inflater = LayoutInflater.from(getActivity());
         view = inflater.inflate(R.layout.shouyeaicgisfragment_layout, null);
-        //ZhuCeReceiver();
-        init();
+
+        //主activity向fragment传入参数的回调  主activity传时间过来 搜索轨迹
+        ((MainActivity)getActivity()).setOnclikListener(new MainActivity.OnMyclikListener() {
+            @Override
+            public void callBack(String carnum, String start_hour, String end_hour) {
+                //Toast.makeText(getActivity(),carnum+":"+start_hour+":"+end_hour, Toast.LENGTH_SHORT).show();
+                if(carnum.equals("")&&start_hour.equals("")&&end_hour.equals("")){
+                    destoryXY();
+                    QingKongGuiJi.setVisibility(View.GONE);
+                    mMapView.setExtent(el);
+                    isVisableLayer();
+                }else {
+                    if (graphicsLayer != null) {
+                        graphicsLayer.removeAll();
+                    }
+                    if(carnum.contains(",")){//代表 进入非默认的车牌号查询轨迹
+                        destoryXY();
+                        carnum=carnum.replace(",","");
+                        carNum = carnum;
+                        Log.e("warn",carNum);
+                        StartTime = start_hour;
+                        EndTime = end_hour;
+                        progressDialog = new MyProgressDialog(getActivity(), false, "加载中..");
+                        new Thread(networkTask).start();
+                        getXY();
+                    } else {
+                        carNum = carnum;
+                        StartTime = start_hour;
+                        EndTime = end_hour;
+                        progressDialog = new MyProgressDialog(getActivity(), false, "加载中..");
+                        new Thread(networkTask).start();
+                    }
+                }
+            }
+        });
+
+
+        ZhuCeReceiver();
+         init();
         return view;
     }
 
@@ -139,17 +200,20 @@ public class ShouYeAiCgisFragment extends Fragment {
         QingKongGuiJi = (ImageView) view.findViewById(R.id.QingKongGuiJi);
         QingKongGuiJi.setOnClickListener(new allListener());
         QingKongGuiJi.setOnTouchListener(new allListener());
-
+        LuWang = (ImageView)view.findViewById(R.id.LuWang);
+        LuWang.setOnTouchListener(new allListener());
         //ImageView all=(ImageView)view.findViewById(R.id.All);
         mMapView = (MapView) view.findViewById(R.id.mapView);//地图控件
         //直接将服务器端发布的地图服务（MapService）作为图层
         //all.setOnClickListener(new allListener());
-        //图层
+        ell = new Envelope(41518943.744218,4627917.759474,41525295.001114,4617645.441673);//这里有4个坐标点，看似是一个矩形的4个顶点。
+        //图层 以这四个点为基础 设置地图显示范围
         el = new Envelope(41511137.09 - 10000,4617857.567 - 10000,41511137.09 + 20000,4617857.567 + 10000);//这里有4个坐标点，看似是一个矩形的4个顶点。
-        mMapView.setExtent(el);
+        mMapView.setExtent(ell);
 
         layer = new ArcGISDynamicMapServiceLayer(Path.get_MapUrl());
         layer.refresh();//刷新地图
+        //layer.getLayers()[1].setVisible(false);
         //添加地图
 
         mMapView.addLayer(layer);
@@ -171,23 +235,46 @@ public class ShouYeAiCgisFragment extends Fragment {
         gifLoadGis.setLayoutParams(lp);
         rlLoadView.setVisibility(View.VISIBLE);
         gifLoadGis.showAnimation();//加载的动画
-        //chechVersion();//检查版本
 
-        //主activity向fragment传入参数的回调  主activity传时间过来 搜索轨迹
+       /* //主activity向fragment传入参数的回调  主activity传时间过来 搜索轨迹
         ((MainActivity)getActivity()).setOnclikListener(new MainActivity.OnMyclikListener() {
             @Override
             public void callBack(String carnum, String start_hour, String end_hour) {
-                Toast.makeText(getActivity(),carnum+":"+start_hour+":"+end_hour, Toast.LENGTH_SHORT).show();
-                if(graphicsLayer!=null){
-                    graphicsLayer.removeAll();
+                //Toast.makeText(getActivity(),carnum+":"+start_hour+":"+end_hour, Toast.LENGTH_SHORT).show();
+                if(carnum.equals("")&&start_hour.equals("")&&end_hour.equals("")){
+                    destoryXY();
+                }else {
+                    if (graphicsLayer != null) {
+                        graphicsLayer.removeAll();
+                    }
+                    if(carnum.contains(",")){//代表 进入非默认的车牌号查询轨迹
+                        destoryXY();
+                        carnum=carnum.replace(",","");
+                        carNum = carnum;
+                        Log.e("warn",carNum);
+                        StartTime = start_hour;
+                        EndTime = end_hour;
+                        progressDialog = new MyProgressDialog(getActivity(), false, "加载中..");
+                        new Thread(networkTask).start();
+                        getXY();
+                    } else {
+                        carNum = carnum;
+                        StartTime = start_hour;
+                        EndTime = end_hour;
+                        progressDialog = new MyProgressDialog(getActivity(), false, "加载中..");
+                        new Thread(networkTask).start();
+                    }
                 }
-                carNum = carnum;
-                StartTime = start_hour;
-                EndTime=end_hour;
-                progressDialog = new MyProgressDialog(getActivity(), false, "加载中..");
-                new Thread(networkTask).start();
             }
-        });
+        });*/
+
+        Bundle bundle = getArguments();
+        if(bundle!=null){
+            carNum = bundle.getString("str");
+            mMapView.setExtent(el);
+            getXY();
+        }
+
 
 
     }
@@ -204,7 +291,7 @@ public class ShouYeAiCgisFragment extends Fragment {
     OnSingleTapListener mOnSingleTapListener = new OnSingleTapListener() {
         @Override
         public void onSingleTap(float x, float y) {
-            iv_search.setImageDrawable(getResources().getDrawable(R.mipmap.dianji));
+            iv_search.setImageDrawable(getResources().getDrawable(R.mipmap.quantucclick));
             if (mIsIdentfy) {
                 mIsIdentfy = false;
                 mCurrentBengZhanDaiMa = "";
@@ -216,7 +303,7 @@ public class ShouYeAiCgisFragment extends Fragment {
                 params = new IdentifyParameters();//识别任务所需参数对象
                 params.setTolerance(80);//设置容差
                 params.setDPI(98);//设置地图的DPI
-                params.setLayers(new int[]{0});//设置要识别的图层数组
+                params.setLayers(new int[]{5});//设置要识别的图层数组 点击进入泵站
                 params.setLayerMode(IdentifyParameters.ALL_LAYERS);//设置识别模式
 
                 final long serialVersionUID = 1L;
@@ -427,10 +514,10 @@ public class ShouYeAiCgisFragment extends Fragment {
 
 
             for (int i = 0; i < identifyResults.length; i++) {
-                Log.e("GISActivity地图服务", "图层名称：" + identifyResults[i].getLayerName() + "");
-                Log.e("GISActivity地图服务", "图层名称：" + identifyResults[i].getAttributes().get("代码") + "");
-                mCurrentBengZhanDaiMa = identifyResults[i].getAttributes().get("代码").toString();
-                System.out.println("QWSA" + identifyResults.length);
+                    Log.e("GISActivity地图服务", "图层名称：" + identifyResults[i].getLayerName() + "");
+                    Log.e("GISActivity地图服务", "图层名称：" + identifyResults[i].getAttributes().get("代码") + "");
+                    mCurrentBengZhanDaiMa = identifyResults[i].getAttributes().get("代码").toString();
+                    System.out.println("QWSA" + identifyResults.length);
             }
 
             //Toast.makeText(GISActivity.this,"查询到"+identifyResults.length+"个结果",Toast.LENGTH_SHORT).show();
@@ -460,10 +547,11 @@ public class ShouYeAiCgisFragment extends Fragment {
                     if (layer.getLayers() != null) {
 
                         layerInforZJ = layer.getLayers()[1];
+                        Log.e("warn","图层总长度"+layer.getLayers().length);
                         for (int i = 0; i < layer.getLayers().length; i++) {
                             ArcGISLayerInfo layerInfor = layer.getLayers()[i];
-                            if (layerInfor.getName().equals(Path.get_BengZhanZhuJi())) {
-                                layerInfor.setVisible(true);
+                            if (layerInfor.getName().equals(Path.get_BengZhanZhuJi())) {//泵站名称隐藏
+                                    layerInfor.setVisible(false);
                             }
                             Log.e("GISActivity地图服务加载", "图层名称：" + layerInfor.getName() + "");
                         }
@@ -481,22 +569,33 @@ public class ShouYeAiCgisFragment extends Fragment {
                 rlLoadView.setVisibility(View.INVISIBLE);
                 gifLoadGis.showCover();
             }
+            new Thread(networkAppUpdate).start();
         }
     }
 
     boolean isBengZhanZhuJi = true;
     boolean isYQ = true;
     boolean isHQ = true;
-
+    private boolean isSearch = false;
+    private boolean isLuWang = false;
     private class allListener implements View.OnClickListener, View.OnTouchListener {
         @Override
         public void onClick(View view) {
             switch (view.getId()) {
-                case R.id.iv_search:
-                    iv_search.setImageDrawable(getResources().getDrawable(R.mipmap.dianjiclick));
-                    if (layer != null) {
-                        mIsIdentfy = true;
+                case R.id.iv_search://全图
+                    isSearch = !isSearch;
+                    if(isSearch) {
+                        iv_search.setImageDrawable(getResources().getDrawable(R.mipmap.quantuc));
+                        if (layer != null) {
+                            mIsIdentfy = true;
+                        }
+                    }else{
+                        iv_search.setImageDrawable(getResources().getDrawable(R.mipmap.quantucclick));
+                        if (layer != null) {
+                            mIsIdentfy = false;
+                        }
                     }
+
                     break;
                 case R.id.iv_QuanTu:
                     break;
@@ -512,7 +611,6 @@ public class ShouYeAiCgisFragment extends Fragment {
 
             }
         }
-
         @Override
         public boolean onTouch(View v, MotionEvent event) {
 
@@ -540,9 +638,14 @@ public class ShouYeAiCgisFragment extends Fragment {
                 case R.id.iv_BiaoZhu:
                                 if (event.getAction() == MotionEvent.ACTION_DOWN) {//按下
                                         iv_BiaoZhu.setAlpha(10);
-                                    layer.getLayers()[1].setVisible(isBengZhanZhuJi);
-                                    isBengZhanZhuJi = !isBengZhanZhuJi;
-                                    layer.refresh();
+                                    if(bengzhan!=null) {
+                                        layer.getLayers()[Integer.parseInt(bengzhan)].setVisible(isBengZhanZhuJi);//是否显示泵站点
+                                        //layer.getLayers()[6].setVisible(isBengZhanZhuJi);//泵站名
+                                        isBengZhanZhuJi = !isBengZhanZhuJi;
+                                        layer.refresh();
+                                    }else{
+                                        Toast.makeText(getActivity(), "获取图层信息失败", Toast.LENGTH_SHORT).show();
+                                    }
                                     if (!isBengZhanZhuJi) {
                                         iv_BiaoZhu.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.benzhangbiaozhuclick));
                                     } else {
@@ -558,6 +661,11 @@ public class ShouYeAiCgisFragment extends Fragment {
                                             QingKongGuiJi.setAlpha(10);
                                             if(graphicsLayer!=null) {
                                                 graphicsLayer.removeAll();
+                                            }else{
+                                                Toast.makeText(getActivity(), "暂无轨迹", Toast.LENGTH_SHORT).show();
+                                            }
+                                            if(mEnvelope!=null){
+                                                mMapView.setExtent(el);
                                             }
                                                 /*rootView.findViewById(R.id.BD_IV_GJsearch).setVisibility(View.GONE);
                                                 rootView.findViewById(R.id.BD_GJsearch).setEnabled(false);*/
@@ -569,6 +677,25 @@ public class ShouYeAiCgisFragment extends Fragment {
                                             QingKongGuiJi.setAlpha(255);
                                         }
                                             break;
+                case R.id.LuWang:
+                                        if (event.getAction() == MotionEvent.ACTION_DOWN) {//按下
+                                            LuWang.setAlpha(10);
+                                            isLuWang = !isLuWang;
+                                            if(luwang!=null) {
+                                                layer.getLayers()[Integer.parseInt(luwang)].setVisible(isLuWang);
+                                                layer.refresh();
+                                            }else{
+                                                Toast.makeText(getActivity(), "获取图层信息失败", Toast.LENGTH_SHORT).show();
+                                            }
+                                            if(isLuWang){
+                                                LuWang.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.roadclick));
+                                            }else{
+                                                LuWang.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.road));
+                                            }
+                                        }if (event.getAction() == MotionEvent.ACTION_UP) {//松开
+                                            LuWang.setAlpha(255);
+                                            }
+                                                        break;
             }
             return true;
         }
@@ -577,21 +704,25 @@ public class ShouYeAiCgisFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        mMapView.pause();
+        if(mMapView!=null) {
+            mMapView.unpause();
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mMapView.unpause();
+        if(mMapView!=null) {
+            mMapView.unpause();
+        }
     }
 
-    //检查更新
+   /* //检查更新
     private void updata() {
         UpdateManager um = new UpdateManager(getActivity());
         um.checkUpdate();
     }
-
+*/
     private View addview;
 
 
@@ -662,7 +793,7 @@ public class ShouYeAiCgisFragment extends Fragment {
         //园区范围
         CheckBox YQ_cb = (CheckBox) view.findViewById(R.id.YQ_cb);//园区范围复选框
         YQ_cb.setOnCheckedChangeListener(new YQ_cbListener());
-        ImageView YQ_pop_iv = (ImageView) view.findViewById(R.id.YQ_pop_iv);//园区范围图片
+        ImageView YQ_pop_iv = (ImageView) view .findViewById(R.id.YQ_pop_iv);//园区范围图片
         TextView YQ_pop_tv = (TextView) view.findViewById(R.id.YQ_pop_tv);//园区范围内容
         if (isQYcheckbox) {
             sum = 1;
@@ -728,18 +859,22 @@ public class ShouYeAiCgisFragment extends Fragment {
                 sum = 0;
                 return;
             }
-            layer.getLayers()[20].setVisible(isYQ);
-            isYQ = !isYQ;
-            layer.refresh();//刷新地图
-            isQYcheckbox = b;
-            ImageView YQ_pop_iv = (ImageView) addview.findViewById(R.id.YQ_pop_iv);//园区范围图片
-            TextView YQ_pop_tv = (TextView) addview.findViewById(R.id.YQ_pop_tv);//园区范围内容
-            if (b == false) {
-                YQ_pop_iv.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.yingxiangtu));
-                YQ_pop_tv.setTextColor(getActivity().getResources().getColor(R.color.huise));
-            } else {
-                YQ_pop_iv.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.yingxiangtuclick));
-                YQ_pop_tv.setTextColor(getActivity().getResources().getColor(R.color.blue));
+            if(yuanqu!=null) {
+                layer.getLayers()[Integer.parseInt(yuanqu)].setVisible(isYQ);
+                isYQ = !isYQ;
+                layer.refresh();//刷新地图
+                isQYcheckbox = b;
+                ImageView YQ_pop_iv = (ImageView) addview.findViewById(R.id.YQ_pop_iv);//园区范围图片
+                TextView YQ_pop_tv = (TextView) addview.findViewById(R.id.YQ_pop_tv);//园区范围内容
+                if (b == false) {
+                    YQ_pop_iv.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.yingxiangtu));
+                    YQ_pop_tv.setTextColor(getActivity().getResources().getColor(R.color.huise));
+                } else {
+                    YQ_pop_iv.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.yingxiangtuclick));
+                    YQ_pop_tv.setTextColor(getActivity().getResources().getColor(R.color.blue));
+                }
+            }else{
+                Toast.makeText(getActivity(), "获取图层信息失败", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -755,20 +890,24 @@ public class ShouYeAiCgisFragment extends Fragment {
                 sum = 0;
                 return;
             }
-            layer.getLayers()[4].setVisible(isHQ);//true显示企业红线
-            layer.getLayers()[5].setVisible(isHQ1);
-            isHQ = !isHQ;
-            isHQ1 = !isHQ1;
-            layer.refresh();//刷新地图
-            isHQcheckbox = b;
-            ImageView QH_pop_iv = (ImageView) addview.findViewById(R.id.QH_pop_iv);//企业红线图片
-            TextView QH_pop_tv = (TextView) addview.findViewById(R.id.QH_pop_tv);//企业红线内容
-            if (b == false) {
-                QH_pop_iv.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.qiyehongxian));
-                QH_pop_tv.setTextColor(getActivity().getResources().getColor(R.color.huise));
-            } else {
-                QH_pop_iv.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.qiyehongxianclick));
-                QH_pop_tv.setTextColor(getActivity().getResources().getColor(R.color.blue));
+            if(companylayer!=null) {
+                layer.getLayers()[Integer.parseInt(companylayer)].setVisible(isHQ);//true显示企业红线
+                //layer.getLayers()[5].setVisible(isHQ1);
+                isHQ = !isHQ;
+                isHQ1 = !isHQ1;
+                layer.refresh();//刷新地图
+                isHQcheckbox = b;
+                ImageView QH_pop_iv = (ImageView) addview.findViewById(R.id.QH_pop_iv);//企业红线图片
+                TextView QH_pop_tv = (TextView) addview.findViewById(R.id.QH_pop_tv);//企业红线内容
+                if (b == false) {
+                    QH_pop_iv.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.qiyehongxian));
+                    QH_pop_tv.setTextColor(getActivity().getResources().getColor(R.color.huise));
+                } else {
+                    QH_pop_iv.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.qiyehongxianclick));
+                    QH_pop_tv.setTextColor(getActivity().getResources().getColor(R.color.blue));
+                }
+            }else{
+                Toast.makeText(getActivity(), "获取图层信息失败", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -806,37 +945,7 @@ public class ShouYeAiCgisFragment extends Fragment {
         }
     }
 
-    //检查版本申请权限
-    //在Fragment中申请权限，不要使用ActivityCompat.requestPermissions,
-    // 直接使用Fragment的requestPermissions方法，否则会回调到Activity的 onRequestPermissionsResult
-    private void chechVersion() {
-        int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 0;
-        if (Build.VERSION.SDK_INT >= 23) {
-            //检查手机是否有该权限
-            int checkCallPhonePermission = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE);
-            if (checkCallPhonePermission != PackageManager.PERMISSION_GRANTED) {//当没有该权限时
-                //弹出对话框申请该权限   数组里装的是要申请的权限 id = 0 索引0 申请权限在数组中的位置 返回的数组结果也在数组索引0中
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
-                return;
-            } else {
-                updata();
-            }
-        } else {
-            updata();
-        }
-    }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        //返回的数组 结果的位置就是申请该权限 申请的权限位置 即索引0
-        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {//已授权
-            Toast.makeText(getActivity(), "授权成功", Toast.LENGTH_SHORT).show();
-            updata();
-        } else {
-            Toast.makeText(getActivity(), "您拒绝了该权限，可能会导致应用内部出现问题，请尽快授权", Toast.LENGTH_SHORT).show();
-        }
-    }
 
     private String start_hour;
     private String end_hour;
@@ -964,7 +1073,7 @@ public class ShouYeAiCgisFragment extends Fragment {
                 // 调用的方法名称
                 String methodName = "Get_XYInfo_List";
                 // EndPoint
-                String endPoint = "http://beidoujieshou.sytxmap.com:5963/GPSService.asmx";
+                String endPoint = Path.get_ZanShibeidouPath();
                 // SOAP Action
                 String soapAction = "http://tempuri.org/Get_XYInfo_List";
                 // 指定WebService的命名空间和调用的方法名
@@ -1130,12 +1239,19 @@ public class ShouYeAiCgisFragment extends Fragment {
     //根据坐标点画轨迹
     private Graphic graphic2;
     private GraphicsLayer graphicsLayer;
+    private Envelope mEnvelope=null;
+    Point point = null;
+    float arr1 [][] = new float[2][2];
     //private SimpleLineSymbol red=new SimpleLineSymbol(Color.RED, 2);
     private void markLocation(String arr[][]) {
         /*graphicsLayer = new GraphicsLayer();
         mMapView.addLayer(graphicsLayer);
         graphicsLayer.removeAll();*/
+        float minX = Float.valueOf(arr[0][1]);
+        float minY = Float.valueOf(arr[0][2]);
 
+        float maxX = Float.valueOf(arr[0][1]);
+        float maxY = Float.valueOf(arr[0][2]);
         //DrawGraphicTouchListener drawgraphictouchlistener=new DrawGraphicTouchListener(getActivity(),mMapView);
         Point wgspoint;
         Point mapPoint;
@@ -1151,6 +1267,33 @@ public class ShouYeAiCgisFragment extends Fragment {
             float locx =Float.valueOf(arr[i][1]);//获取坐标点
             float locy =Float.valueOf(arr[i][2]);
 
+            if(locx<minX){
+                minX=locx;
+            }
+            if(locy<minY){
+                minY = locy;
+            }
+            if(locx>maxX){
+                maxX = locx;
+            }
+            if (locy>maxY){
+                maxY = locy;
+            }
+
+            if(locx<minX){
+
+            }
+
+            if(i==0){
+                point = new Point(locx,locy);
+                arr1[0][0]=locx;
+                arr1[0][1]=locy;
+            }
+            if(i==arr.length-1){
+                arr1[1][0]=locx;
+                arr1[1][1]=locy;
+            }
+
             Log.e("warn",String.valueOf(i));
             wgspoint = new Point(locx, locy);
            // wgspoint1 = new Point(locx1, locy1);
@@ -1164,25 +1307,55 @@ public class ShouYeAiCgisFragment extends Fragment {
                 Graphic graphicPoint = new Graphic(wgspoint, new SimpleMarkerSymbol(Color.GREEN, 15, SimpleMarkerSymbol.STYLE.CIRCLE));
                 graphicsLayer.addGraphic(graphicPoint);
                 //文字标注
-                TextSymbol ts = new TextSymbol(10,arr[i][3],Color.BLUE);
-                ts.setFontFamily("DroidSansFallback.ttf");//设置字体
+                String s ="开始:"+ arr[i][3];
+                //将文字转为图片
+                Drawable image=createMapBitMap(s);
+                //将文字图片添加到覆盖物symbol上
+                PictureMarkerSymbol symbol = new PictureMarkerSymbol(image);
+                //设置覆盖物偏离point（指定坐标点的距离）的距离
+                symbol.setOffsetX(0);
+                symbol.setOffsetY(-30);
+                //将覆盖物添加到小图层上
+                Graphic g = new Graphic(wgspoint, symbol,0);
+                //将覆盖物添加到大图层上
+                graphicsLayer.addGraphic(g);
+               /* PictureMarkerSymbol markerSymbol = new PictureMarkerSymbol(
+                        createMapBitMap(arr[i][3]));
+                Graphic graphic2 = new Graphic(env.getCenter(), markerSymbol);
+*/               //加文字标注
+               /* TextSymbol ts = new TextSymbol(10,"开始"+arr[i][3],Color.BLUE);
+                ts.setFontFamily("Droid Sans");//设置字体
                 ts.setOffsetX(0);//偏移量
                 ts.setOffsetY(-30);
                 Graphic gText = new Graphic(wgspoint,ts);//创建图层 参数坐标 和文字标注对象
-                graphicsLayer.addGraphic(gText);
+                graphicsLayer.addGraphic(gText);*/
 
             }else if(i==arr.length-1){//终点圆点图层 添加到graphicsLayer图层里
                 Graphic graphicPoint = new Graphic(wgspoint, new SimpleMarkerSymbol(Color.BLACK, 15, SimpleMarkerSymbol.STYLE.CIRCLE));
                 graphicsLayer.addGraphic(graphicPoint);
+
+
+                String s ="结束:"+ arr[i][3];
+                //将文字转为图片
+                Drawable image=createMapBitMap(s);
+                //将文字图片添加到覆盖物symbol上
+                PictureMarkerSymbol symbol = new PictureMarkerSymbol(image);
+                //设置覆盖物偏离point（指定坐标点的距离）的距离
+                symbol.setOffsetX(0);
+                symbol.setOffsetY(-30);
+                //将覆盖物添加到小图层上
+                Graphic g = new Graphic(wgspoint, symbol,0);
+                //将覆盖物添加到大图层上
+                graphicsLayer.addGraphic(g);
                /* poly1.lineTo(wgspoint);
                 Graphic graphic =new Graphic(poly1, new SimpleLineSymbol(Color.RED, 2,SimpleLineSymbol.STYLE.SOLID));
                 graphicsLayer.addGraphic(graphic);*/
-                TextSymbol ts = new TextSymbol(10,arr[i][3],Color.BLUE);
+                    /*TextSymbol ts = new TextSymbol(10,arr[i][3],Color.BLUE);
                 ts.setFontFamily("DroidSansFallback.ttf");
                 ts.setOffsetX(0);//偏移量
                 ts.setOffsetY(-30);
                 Graphic gText = new Graphic(wgspoint,ts);//创建图层 参数坐标 和文字标注对象
-                graphicsLayer.addGraphic(gText);
+                graphicsLayer.addGraphic(gText);*/
             }
             //画线
           if (startPoint == null) {
@@ -1200,9 +1373,13 @@ public class ShouYeAiCgisFragment extends Fragment {
         }
         //线图层 添加到graphicsLayer图层里
         //mMapView.addView(new MyCanvas(getActivity()));
-        Graphic graphic =new Graphic(poly, new SimpleLineSymbol(Color.RED,2,SimpleLineSymbol.STYLE.SOLID));
+        Graphic graphic =new Graphic(poly, new SimpleLineSymbol(Color.RED,5,SimpleLineSymbol.STYLE.SOLID));
         //Graphic graphic1 =new Graphic(poly2, new SimpleMarkerSymbol(Color.WHITE,5, SimpleMarkerSymbol.STYLE.TRIANGLE));
         graphicsLayer.addGraphic(graphic);
+       // mMapView.zoomTo(point,2*2); //放大某点
+        mEnvelope= new Envelope(minX,minY,maxX,maxY);//这里有4个坐标点，看似是一个矩形的4个顶点。//设置当前地图范围(放大轨迹)
+        mMapView.setExtent(mEnvelope);
+       // mMapView.
         //graphicsLayer.addGraphic(graphic1);
         //int k=arr.length/200;
        /*for(int j=1;j<=200;j++){
@@ -1316,5 +1493,391 @@ public class ShouYeAiCgisFragment extends Fragment {
     }
     interface OnMapClikListener {
         public void onclik(String isSelect);
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if(hidden==false){
+            if(graphicsLayer!=null){
+                graphicsLayer.removeAll();
+            }if(mMapView!=null){
+                mMapView.setExtent(ell);
+            }
+            /* Bundle bundle = getArguments();
+            if(bundle!=null){
+                if(bundle.getString("CARNUM")!=null){
+                    getXY();
+                }
+            }*/
+            isVisableLayer();
+        }
+    }
+    //动态注册广播 监听刚进入北斗地图时每4s一定位的广播 ，注意：地图刚加载时无效
+    private MyReceiver mReceiver;
+    private void ZhuCeReceiver(){
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.neter.broadcast.receiver.SendDownXMLBroadCast");
+        mReceiver = new MyReceiver();
+        getActivity().registerReceiver(mReceiver, filter);
+    }
+    public class MyReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent.getAction().equals("com.neter.broadcast.receiver.SendDownXMLBroadCast")){
+                carNum=intent.getStringExtra("CARNUM");
+                Message msg = Message.obtain();
+                msg.obj="CARNUM";
+                DW_handler.sendMessage(msg);
+            }
+        }
+    }
+
+    public void destoryXY(){
+        if(mGraphicsLayer!=null){
+
+            mGraphicsLayer.removeAll();
+        }
+        if(timer!=null){
+            timer.cancel();//结束定时请求定位
+        }
+        if(graphicsLayer!=null){
+            graphicsLayer.removeAll();
+        }
+    }
+    private Handler DW_handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if(mMapView!=null) {
+                mMapView.setExtent(el);
+            }
+            getXY();
+        }
+    };
+    private GraphicsLayer mGraphicsLayer= new GraphicsLayer();;//覆盖物
+    public Timer timer = null;
+
+    private void getXY(){
+        QingKongGuiJi.setVisibility(View.VISIBLE);
+        //timer = new Timer();
+        //获得4s一定位的XY坐标
+        //final Timer timer = new Timer();
+        timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                if(mGraphicsLayer!=null){
+                    mGraphicsLayer.removeAll();
+                }
+                    //timer.cancel();// 停止定时器
+                try{
+                    Log.e("warn","30");
+                    // 命名空间
+                    String nameSpace = "http://tempuri.org/";
+                    // 调用的方法名称
+                    String methodName = "Get_OneCarInsXY_List";
+                    // EndPoint
+                    String endPoint = Path.get_ZanShibeidouPath();
+                    // SOAP Action
+                    String soapAction = "http://tempuri.org/Get_OneCarInsXY_List";
+                    // 指定WebService的命名空间和调用的方法名
+                    SoapObject rpc = new SoapObject(nameSpace, methodName);
+                    //设置需调用WebService接口需要传入的参数CarNum
+                    Log.e("warn",carNum+":提交");
+                    rpc.addProperty("CARNUM",carNum);
+                    // 生成调用WebService方法的SOAP请求信息,并指定SOAP的版本
+                    SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER10);
+                    envelope.dotNet = true;
+                    envelope.setOutputSoapObject(rpc);
+
+                    AndroidHttpTransport ht = new AndroidHttpTransport(endPoint);
+                    ht.debug=true;
+                    Log.e("warn","50");
+                    try {
+                        // 调用WebService
+                        ht.call(soapAction, envelope);
+                    } catch (Exception e) {
+                        Message msg = Message.obtain();
+                        msg.what=0;
+                        hanlder.sendMessage(msg);
+                    }
+
+                    SoapObject object;
+                    // 开始调用远程方法
+                    Log.e("warn","60");
+
+
+                    object = (SoapObject) envelope.getResponse();
+                    Log.e("warn","64");
+                    // 得到服务器传回的数据 数据时dataset类型的
+                    int count1 = object.getPropertyCount();
+                    Log.e("warn",String.valueOf(count1));
+                    if(count1>0)
+                    {
+                        Log.e("warn","-----------------------------");
+                        SoapObject soapProvince = (SoapObject) envelope.bodyIn;
+                        Log.e("warn",soapProvince.getProperty("Get_OneCarInsXY_ListResult").toString()+":返回id");//dataset数据类型
+                        String str = soapProvince.getProperty("Get_OneCarInsXY_ListResult").toString();
+                        Message msg = Message.obtain();
+                        msg.what=1;
+                        msg.obj=str;
+                        hanlder.sendMessage(msg);
+                    }
+                } catch (Exception e){
+                    Message msg = Message.obtain();
+                    msg.what=0;
+                    hanlder.sendMessage(msg);
+                }
+
+
+            }
+        };
+        timer.schedule(task, 0,30000);// 1秒一次
+    }
+    private Handler hanlder = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            int i = msg.what;
+            if(i==0){
+                Toast.makeText(getActivity().getApplicationContext(),"网络或服务器异常",Toast.LENGTH_SHORT).show();
+            }else if(i==1){
+                String str = (String) msg.obj;
+                Log.e("warn",str);
+                int index = str.indexOf("{");
+                int index1= str.length();
+                String str2 = str.substring(index+1,index1-1);
+                Log.e("warn",str2);
+                String arr[] =str2.split(";");
+                for(int j=0;j<arr.length;j++){
+                    arr[j]=arr[j].substring(arr[j].indexOf("=")+1);
+                    Log.e("warn",arr[j]);
+                }
+                AddNewGraphic(arr);
+            }else{
+                Toast.makeText(getActivity().getApplicationContext(),"获取信息失败",Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
+    //加定位小车图片
+    private void AddNewGraphic(String arr []) {
+        float x=Float.valueOf(arr[2]);
+        float y=Float.valueOf(arr[3]);
+        int m_Char = 65;
+        GraphicsLayer layer = GetGraphicLayer();
+        if (layer != null && layer.isInitialized() && layer.isVisible()) {
+            // 转换坐标
+            //Point pt = mMapView.toMapPoint(new Point(x, y));
+            Point pt = new Point(x, y);
+            // 附加特别的属性
+            //Map<String, Object> map = new HashMap<String, Object>();
+            //map.put("tag", "" + (char) (m_Char++));
+            // 创建 graphic对象
+            Graphic gp1 = CreateGraphic(pt,arr);
+            // 添加 Graphics 到图层
+            layer.addGraphic(gp1);
+        }
+    }
+    private Graphic CreateGraphic(Point geometry, String arr []) {
+        GraphicsLayer layer = GetGraphicLayer();// 获得图层
+        Drawable image;
+        if(arr[5].equals("0")){
+             image = getActivity().getBaseContext()
+                    .getResources().getDrawable(R.mipmap.online);
+        }else{
+             image = getActivity().getBaseContext()
+                    .getResources().getDrawable(R.mipmap.noonline);
+        }
+        PictureMarkerSymbol symbol = new PictureMarkerSymbol(image);
+
+        // 构建graphic
+        // Graphic g = new Graphic(geometry, symbol);
+        Graphic g = new Graphic(geometry, symbol,0);
+        return g;
+    }
+
+    private GraphicsLayer GetGraphicLayer() {
+
+            mMapView.addLayer(mGraphicsLayer);
+
+        return mGraphicsLayer;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        destoryXY();
+    }
+
+    /**中文标注乱码所以将文字转为图片
+     * 文字转换BitMap
+     * @param text
+     * @return
+     */
+    public static Drawable createMapBitMap(String text) {
+
+        Paint paint = new Paint();
+        paint.setColor(Color.BLUE);
+        paint.setTextSize(20);
+        paint.setAntiAlias(true);
+        paint.setTextAlign(Paint.Align.CENTER);
+
+        float textLength = paint.measureText(text);
+
+        int width = (int) textLength + 10;
+        int height = 40;
+
+        Bitmap newb = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+        Canvas cv = new Canvas(newb);
+        cv.drawColor(Color.parseColor("#00000000"));
+
+        cv.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG
+                | Paint.FILTER_BITMAP_FLAG));
+
+        cv.drawText(text, width / 2, 20, paint);
+
+        cv.save(Canvas.ALL_SAVE_FLAG);// 保存
+        cv.restore();// 存储
+
+        return new BitmapDrawable(newb);
+    }
+    private String companylayer;//企业红线
+    private String bengzhan;//bengzhan
+    private String yuanqu;//园区范围
+    private String luwang ;//路网
+    //获取隐藏图层信息
+    Runnable networkAppUpdate = new Runnable() {
+        @Override
+        public void run() {
+            try {
+
+                String urlDownload = "";
+                urlDownload = "http://beidoujieshou.sytxmap.com:5563/mapLayers.xml";
+                String dirName = "";
+                dirName = Environment.getExternalStorageDirectory() + "/PSZX_Update/";//写入xml文件的文件夹名称
+                File f = new File(dirName);
+                if (!f.exists()) {
+                    f.mkdir();
+                }
+
+                String newFilename = dirName + "tuceng.xml";//写入xml文件的xml文件名称
+                File file = new File(newFilename);
+                if (file.exists()) {
+                    file.delete();
+                }
+
+                URL url = new URL(urlDownload);//根据url获取xml文件信息
+                URLConnection con = url.openConnection();
+                int contentLenght = con.getContentLength();
+                Log.i("mylog", "获取文件流长度：" + contentLenght);
+                InputStream is = con.getInputStream();
+                byte[] bs = new byte[1024];
+                int len;
+
+                OutputStream os = new FileOutputStream(newFilename);//写到本地
+                while ((len = is.read(bs)) != -1) {
+                    os.write(bs, 0, len);
+                }
+                os.close();
+
+
+                InputStream inStream = new FileInputStream(newFilename);//将本地xml文件转为流
+                XmlPullParser xpp = Xml.newPullParser();//解析
+                xpp.setInput(inStream, "UTF-8");
+                int event = xpp.getEventType();
+                while (event != XmlPullParser.END_DOCUMENT) {
+                    switch (event) {
+                        // 文档的开始标签
+                        case XmlPullParser.START_TAG:
+
+                            /*if (xpp.getName().equals("layersNumber")) {
+                                String sumlayer = xpp.nextText();
+                                Log.e("warn", sumlayer);
+                            } else*/ if (xpp.getName().equals("HidensNumber")) {//需要隐藏的图层
+                                String Hiddenlayer = xpp.nextText();
+                                Log.e("warn", Hiddenlayer);
+                            } else if (xpp.getName().equals("qiyeLineLayer")) { //企业红线
+                                companylayer = xpp.nextText();
+                                Log.e("warn", companylayer);
+                            } else if (xpp.getName().equals("bengZhanNameLayer")) {//企业红线泵站
+                                bengzhan = xpp.nextText();
+                                Log.e("warn", bengzhan);
+                            } else if (xpp.getName().equals("yuanQuFanWeiLayer")) {//园区范围
+                                yuanqu = xpp.nextText();
+                                Log.e("warn", yuanqu);
+                            } else if (xpp.getName().equals("LvWangLayer")) {//路网
+                                luwang = xpp.nextText();
+                                Log.e("warn", luwang);
+                            }
+                            break;
+                    }
+                    // 往下解析
+                    event = xpp.next();
+                }
+                is.close();
+                Message msg = Message.obtain();
+                msg.what=1;
+                layer_Handler.sendMessage(msg);
+            } catch (Exception e) {
+                Message msg = Message.obtain();
+                msg.what=0;
+                layer_Handler.sendMessage(msg);
+            }
+        }
+    };
+    private Handler layer_Handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            int i = msg.what;
+            if(i==0){
+                Toast.makeText(getActivity(), "服务器异常", Toast.LENGTH_SHORT).show();
+            }else{
+                if(bengzhan!=null){
+                     layer.getLayers()[Integer.parseInt(bengzhan)].setVisible(false);
+                    layer.refresh();
+                }
+                if(yuanqu!=null){
+                    layer.getLayers()[Integer.parseInt(yuanqu)].setVisible(false);
+                    layer.refresh();
+                }
+            }
+        }
+    };
+    private void isVisableLayer(){
+        if(!isBengZhanZhuJi){
+            layer.getLayers()[Integer.parseInt(bengzhan)].setVisible(false);//是否显示泵站点
+            layer.refresh();
+            iv_BiaoZhu.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.benzhangbiaozhu));
+            isBengZhanZhuJi=!isBengZhanZhuJi;
+        }
+        if(isLuWang){
+            layer.getLayers()[Integer.parseInt(luwang)].setVisible(false);//是否显示路网
+            layer.refresh();
+            LuWang.setImageDrawable(getActivity().getResources().getDrawable(R.mipmap.road));
+            isLuWang=!isLuWang;
+        }
+        if(!isYQ){
+            layer.getLayers()[Integer.parseInt(yuanqu)].setVisible(false);//是否显示园区
+            layer.refresh();
+            isYQ=!isYQ;
+            sum = 0;
+            isQYcheckbox=!isQYcheckbox;
+        }
+        if(!isHQ){
+            layer.getLayers()[Integer.parseInt(companylayer)].setVisible(false);//true显示企业红线
+            layer.refresh();
+            isHQ = !isHQ;
+            sum = 0;
+            isHQcheckbox=!isHQcheckbox;
+        }
     }
 }
